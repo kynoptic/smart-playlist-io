@@ -7,6 +7,7 @@ Purpose: Validates that encode() produces correctly structured binary blobs
          against real Apple Music library exports.
 """
 
+import pathlib
 import struct
 
 import pytest
@@ -818,3 +819,60 @@ class TestErrorHandling:
     def test_should_reject_invalid_select_by(self):
         with pytest.raises(ValueError, match="select_by"):
             encode(AND([rule("Rating", "greater", 3)]), limit=25, select_by="random_pick")
+
+
+# ---------------------------------------------------------------------------
+# Golden binary fixture (macOS compatibility canary)
+#
+# These tests load checked-in binary blobs and assert byte-for-byte equality
+# with freshly encoded output. If _SUBEXPR_SKIP_BASE, _BOILERPLATE, or any
+# layout constant ever changes (e.g. after a macOS update), the tests fail
+# and show exactly which bytes differ.
+#
+# To regenerate the fixtures after a confirmed format change:
+#   python tests/fixtures/regenerate.py
+# ---------------------------------------------------------------------------
+
+FIXTURES = pathlib.Path(__file__).parent / "fixtures"
+
+
+@pytest.mark.unit
+class TestGoldenBinaryFixture:
+    """Byte-for-byte regression guard against macOS format changes.
+
+    If _SUBEXPR_SKIP_BASE, _BOILERPLATE, or any layout constant changes
+    (e.g. after a macOS update), these tests fail and show exactly which
+    bytes differ. To update the fixture after a confirmed format change:
+      python -m pytest tests/test_encode.py -k golden -s  # see the diff
+      # then regenerate: python tests/fixtures/regenerate.py
+    """
+
+    TREE = AND(
+        [
+            rule("Rating", "greater", 3),
+            rule("Artist", "contains", "Rock"),
+            rule("Checked", "is", True),
+            OR(
+                [
+                    rule("Genre", "is", "Jazz"),
+                    rule("Plays", "greater", 10),
+                ]
+            ),
+        ]
+    )
+
+    def test_should_produce_known_criteria_bytes(self):
+        _, crit = encode(self.TREE)
+        expected = (FIXTURES / "golden_criteria.bin").read_bytes()
+        assert crit == expected, (
+            f"Criteria bytes changed! Got {len(crit)} bytes, expected {len(expected)}. "
+            "This may indicate a macOS format change. Check _SUBEXPR_SKIP_BASE and "
+            "_BOILERPLATE, then regenerate fixtures if the change is intentional."
+        )
+
+    def test_should_produce_known_info_bytes(self):
+        info, _ = encode(self.TREE)
+        expected = (FIXTURES / "golden_info.bin").read_bytes()
+        assert (
+            info == expected
+        ), f"Info bytes changed! Got {len(info)} bytes, expected {len(expected)}."

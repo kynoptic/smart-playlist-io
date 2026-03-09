@@ -6,8 +6,11 @@ Purpose: Validates that decode_criteria() correctly reverses encode() output
          for all supported rule types.
 """
 
+import base64
 import plistlib
 import struct
+import subprocess
+import sys
 
 import pytest
 
@@ -437,3 +440,154 @@ class TestDecodeCLI:
         main()
         out = capsys.readouterr().out
         assert "Playlists: 0" in out
+
+
+# ---------------------------------------------------------------------------
+# Coverage: previously uncovered branches
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestDecodeCoverage:
+    """Tests targeting the 5 uncovered lines in decode.py."""
+
+    # ------------------------------------------------------------------
+    # Lines 140-141: UTF-16 decode exception path in _decode_string_rule
+    # ------------------------------------------------------------------
+
+    def test_should_fall_back_to_byte_count_when_utf16_decode_raises(self):
+        """Force the except branch by injecting bytes whose .decode() raises."""
+        from smart_playlist_io.decode import _decode_string_rule
+
+        # BadData intercepts slice operations so that the returned bytes object's
+        # .decode() method raises UnicodeDecodeError, triggering the except branch.
+        class _FailDecode(bytes):
+            def decode(self, *args, **kwargs):
+                raise UnicodeDecodeError("utf-16-le", bytes(self), 0, 1, "injected")
+
+        class _BadData(bytes):
+            def __getitem__(self, key):
+                result = super().__getitem__(key)
+                if isinstance(key, slice) and isinstance(result, bytes):
+                    return _FailDecode(result)
+                return result
+
+        string_header = bytearray(54)
+        string_header[0] = 0x08  # Genre field_id (in STRING_FIELD_IDS)
+        string_header[1] = SIGN_STR_POS
+        string_header[4] = LRULE_CONT
+        string_header[52] = 4  # str_len = 4
+        string_data = b"\x4a\x00\x61\x00"  # valid bytes, but decode is mocked to fail
+
+        raw = bytes(string_header) + string_data
+        data = _BadData(raw)
+
+        result, next_offset = _decode_string_rule(data, 0)
+        # Fallback value must be "<N bytes>" where N == str_len
+        assert "<4 bytes>" in result
+        assert "Genre" in result
+
+    # ------------------------------------------------------------------
+    # Lines 285-288: base64 string branch in _load_smart_playlists (CLI path)
+    # ------------------------------------------------------------------
+
+    def test_should_decode_library_xml_with_base64_string_values(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        """Smart Info / Smart Criteria stored as <string> (base64) instead of <data>.
+
+        Some plist formats return strings instead of bytes objects.  The CLI path
+        (lines 285-288) must base64-decode them before passing to decode_criteria().
+        """
+        from smart_playlist_io.decode import main
+
+        info_bytes, crit_bytes = encode(AND([rule("Rating", "greater", 3)]), live=True)
+
+        # Build plist XML with <string> tags containing base64-encoded payloads.
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"'
+            ' "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+            '<plist version="1.0">\n'
+            "<dict>\n"
+            "  <key>Playlists</key>\n"
+            "  <array>\n"
+            "    <dict>\n"
+            "      <key>Name</key>\n"
+            "      <string>StringBase64PL</string>\n"
+            "      <key>Smart Info</key>\n"
+            f"      <string>{base64.b64encode(info_bytes).decode()}</string>\n"
+            "      <key>Smart Criteria</key>\n"
+            f"      <string>{base64.b64encode(crit_bytes).decode()}</string>\n"
+            "    </dict>\n"
+            "  </array>\n"
+            "</dict>\n"
+            "</plist>\n"
+        )
+        xml_path = tmp_path / "Library.xml"
+        xml_path.write_bytes(xml.encode())
+
+        monkeypatch.setattr("sys.argv", ["decode-smart-playlists", str(xml_path)])
+        main()
+        out = capsys.readouterr().out
+        assert "StringBase64PL" in out
+        assert "Rating" in out
+
+    # ------------------------------------------------------------------
+    # Lines 324-325: __main__ guard
+    # ------------------------------------------------------------------
+
+    def test_should_run_as_module_with_help_flag(self):
+        """Invoke decode as __main__ via subprocess to hit the if __name__ guard."""
+        result = subprocess.run(
+            [sys.executable, "-m", "smart_playlist_io.decode", "--help"],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+        assert "Library XML" in result.stdout or "library" in result.stdout.lower()
+
+
+# ---------------------------------------------------------------------------
+# SELECT_METHOD decode roundtrip: sign-based disambiguation for colliding pairs
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestSelectMethodRoundtrip:
+    """Guard sign-based disambiguation for SELECT_METHOD byte collisions.
+
+    most_played / least_played share byte 0x19 — direction disambiguated by SELECT_SIGN.
+    most_recently_played / least_recently_played share byte 0x1A.
+    most_recently_added / least_recently_added share byte 0x15.
+    """
+
+    def test_should_distinguish_most_vs_least_played(self):
+        most = decoded_info(AND([rule("Rating", "is", 4)]), select_by="most_played", limit=25)
+        least = decoded_info(AND([rule("Rating", "is", 4)]), select_by="least_played", limit=25)
+        assert "most" in most.lower() or "played" in most.lower()
+        assert "least" in least.lower()
+        assert most != least
+
+    def test_should_distinguish_most_vs_least_recently_played(self):
+        most = decoded_info(
+            AND([rule("Rating", "is", 4)]), select_by="most_recently_played", limit=25
+        )
+        least = decoded_info(
+            AND([rule("Rating", "is", 4)]), select_by="least_recently_played", limit=25
+        )
+        assert most != least
+
+    def test_should_distinguish_most_vs_least_recently_added(self):
+        most = decoded_info(
+            AND([rule("Rating", "is", 4)]), select_by="most_recently_added", limit=25
+        )
+        least = decoded_info(
+            AND([rule("Rating", "is", 4)]), select_by="least_recently_added", limit=25
+        )
+        assert most != least
+
+    def test_should_distinguish_highest_vs_lowest_rated(self):
+        high = decoded_info(AND([rule("Rating", "is", 4)]), select_by="highest_rated", limit=25)
+        low = decoded_info(AND([rule("Rating", "is", 4)]), select_by="lowest_rated", limit=25)
+        assert high != low
