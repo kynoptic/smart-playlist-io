@@ -1,4 +1,5 @@
 # Changelog
+<!-- markdownlint-disable MD024 -->
 
 All notable changes to this project will be documented in this file.
 
@@ -12,22 +13,26 @@ Add developer tooling and repository hygiene for professional open-source standa
 ### Added
 
 - `py.typed` marker for PEP 561 compliance
-- Ruff linter and formatter (`make lint`, `make fmt`, CI lint job)
-- `.pre-commit-config.yaml` with Ruff and basic file hooks
+- Ruff linter and formatter with `make lint`, `make fmt`, and a CI lint job
+- Pre-commit hooks for Ruff formatting, import sorting, and file hygiene
 - `SECURITY.md` with vulnerability reporting instructions
 - `CODE_OF_CONDUCT.md` referencing Contributor Covenant v2.1
 - Explicit `[tool.mypy]` and `[tool.ruff]` configuration in `pyproject.toml`
-- 95% coverage threshold enforced via `--cov-fail-under`
-
-## [1.0.1] - 2026-03-08
-
-Improve package metadata for PyPI discoverability.
+- 95% minimum coverage threshold enforced in CI and local test runs
+- GitHub issue templates for bugs and features, and a pull request template
 
 ### Changed
 
-- Added PyPI homepage URL, source URL, and bug tracker URL to package metadata
-- Added keywords and classifiers for PyPI discoverability
-- Pinned supported Python versions (3.12, 3.13) in classifiers
+- `THIRD_PARTY_NOTICES` renamed to `NOTICE` (conventional OSS filename)
+- `CLAUDE.md` renamed to `AGENTS.md` with a `CLAUDE.md` symlink (agent instructions convention)
+
+## [1.0.1] - 2026-03-08
+
+Add PyPI version badge to README.
+
+### Added
+
+- PyPI version badge in README
 
 ## [1.0.0] - 2026-03-08
 
