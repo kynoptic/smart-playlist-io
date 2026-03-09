@@ -1,22 +1,45 @@
 #!/usr/bin/env bash
-# Enforce that commit body lines (if present) start with "- "
+# Enforce commit message conventions:
+#   - Subject line <= 50 characters
+#   - Body lines (if present) start with "- "
+#   - Body lines do not exceed 100 characters
 set -euo pipefail
 
 commit_msg_file="${1}"
-commit_msg=$(cat "${commit_msg_file}")
+msg=$(grep -v '^#' "${commit_msg_file}")
 
-# Strip comment lines, then split into subject / body
-body=$(echo "${commit_msg}" | grep -v '^#' | tail -n +3)
+subject=$(echo "${msg}" | head -1)
+body=$(echo "${msg}" | tail -n +3)
 
-if [ -z "${body}" ]; then
-    exit 0
+errors=0
+
+# Subject length
+subject_len=${#subject}
+if [ "${subject_len}" -gt 50 ]; then
+    echo "Subject line too long (${subject_len} > 50 chars): ${subject}"
+    errors=$((errors + 1))
 fi
 
-while IFS= read -r line; do
-    [ -z "${line}" ] && continue  # skip blank lines
-    if [[ ! "${line}" =~ ^-\  ]]; then
-        echo "Commit body lines must start with '- '"
-        echo "  Offending line: ${line}"
-        exit 1
-    fi
-done <<< "${body}"
+# Body checks
+if [ -n "${body}" ]; then
+    while IFS= read -r line; do
+        [ -z "${line}" ] && continue
+
+        # Must start with "- " (bullet) or "BREAKING CHANGE:" (footer)
+        if [[ ! "${line}" =~ ^-\  ]] && [[ ! "${line}" =~ ^BREAKING\ CHANGE: ]]; then
+            echo "Body lines must start with '- ' (or 'BREAKING CHANGE:')"
+            echo "  Offending line: ${line}"
+            errors=$((errors + 1))
+        fi
+
+        # Line length
+        line_len=${#line}
+        if [ "${line_len}" -gt 100 ]; then
+            echo "Body line too long (${line_len} > 100 chars): ${line}"
+            errors=$((errors + 1))
+        fi
+    done <<< "${body}"
+fi
+
+[ "${errors}" -gt 0 ] && exit 1
+exit 0
