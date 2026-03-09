@@ -18,6 +18,14 @@ init: ## Create/update .venv and install all dependencies
 
 test: ## Run the full test suite
 	$(VENVPY) -m pytest
+	@error_count=$$($(VENVPY) -m mypy src tests 2>&1 | grep -c "error:" || true); \
+	baseline=$$(head -1 .type_baseline); \
+	echo "mypy errors: $$error_count (baseline: $$baseline)"; \
+	if [ "$$error_count" -gt "$$baseline" ]; then \
+		echo "Type errors increased from $$baseline to $$error_count"; \
+		$(VENVPY) -m mypy src tests; \
+		exit 1; \
+	fi
 
 clean: ## Remove .venv/, __pycache__/, and .pytest_cache/
 	rm -rf $(VENV)

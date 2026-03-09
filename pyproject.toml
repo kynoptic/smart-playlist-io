@@ -34,6 +34,8 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "--disable-warnings",
+    "--cov=smart_playlist_io",
+    "--cov-report=term-missing",
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
