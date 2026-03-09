@@ -81,6 +81,12 @@ decode-smart-playlists /path/to/Library.xml
 decode-smart-playlists /path/to/Library.xml --out baseline.md
 ```
 
+## Known Limitations
+
+- String fields (Name, Artist, Album, Genre, etc.) are limited to **127 characters** due to a UTF-16 byte-length constraint in the binary format. Longer values raise `ValueError`.
+- The binary format is reverse-engineered from 2021 Music.app library exports and may change with future macOS updates. If imports start failing after an OS update, see [`docs/runbook-format-changes.md`](docs/runbook-format-changes.md).
+- Decoding is best-effort: unknown field IDs and operator codes are reported as hex literals rather than raising errors.
+
 ## Notes
 
 Binary format details and the skip-length padding decision are in [`docs/format-constants.md`](docs/format-constants.md).

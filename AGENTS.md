@@ -41,7 +41,17 @@ tests/
 
 `decode-smart-playlists <library.xml>` — decodes all smart playlists to readable text.
 
+## Docs
+
+| File | Diátaxis type | Contents |
+|------|---------------|----------|
+| `docs/format-constants.md` | Explanation | Empirically-derived constants: skip-length base, rating offset, string length limit |
+| `docs/adr-001-boilerplate-n2-no-identity-child.md` | Architecture Decision Record | Why `_BOILERPLATE` uses N=2 without an identity child node |
+| `docs/adr-002-top-level-or-emitted-directly.md` | Architecture Decision Record | Why top-level OR is emitted directly rather than wrapped |
+| `docs/runbook-format-changes.md` | How-to | Diagnosing and fixing broken imports after a macOS update |
+
 ## Safety
 
 - Encoder is battle-tested: 86 tests + verified Music.app imports for all rule types
 - The +3 skip-length padding is empirically derived — if Music.app imports fail after a macOS update, the padding may have changed
+- String fields are capped at 127 characters (UTF-16 byte length must fit in one byte)

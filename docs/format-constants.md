@@ -35,3 +35,11 @@ Without the offset, Music.app silently excludes the upper boundary — a "betwee
 The decoder reverses this with `(val_b - 9) // 20` under the same conditions.
 
 The purpose of the +9 is unknown.
+
+## String field character limit: 127
+
+String rule values are encoded as UTF-16 LE. The byte length of the encoded string is written into a single byte at offset 52 of the string rule header. A single byte can hold a maximum value of 255, and UTF-16 uses 2 bytes per character, so the maximum number of characters is 255 ÷ 2 = **127**.
+
+Affected fields include: `Name`, `Artist`, `Album`, `Genre`, `Comments`, `Grouping`, `Composer`, `AlbumArtist`, `Kind`, and any other string-type field.
+
+Passing a value longer than 127 characters raises `ValueError` with a message indicating the field name and the excess length. Values must be truncated before calling `rule()` if the source data may exceed this limit.
