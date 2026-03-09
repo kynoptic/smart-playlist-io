@@ -41,5 +41,11 @@ if [ -n "${body}" ]; then
     done <<< "${body}"
 fi
 
-[ "${errors}" -gt 0 ] && exit 1
-exit 0
+if [ "${errors}" -gt 0 ]; then
+    exit 1
+fi
+
+# Reminders for conventions that cannot be automated
+echo "Reminder: verify manually —"
+echo "  - Subject uses imperative mood (\"add feature\", not \"adds feature\")"
+echo "  - Code, filenames, and identifiers are wrapped in backticks"
