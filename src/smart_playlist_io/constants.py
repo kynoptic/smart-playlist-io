@@ -196,3 +196,16 @@ _INFO_SELECTIONMETHOD = 7
 _INFO_LIMITINT = 8  # 4 bytes big-endian
 _INFO_LIMITCHECKED = 12
 _INFO_SELECTIONMETHODSIGN = 13
+
+# ---------------------------------------------------------------------------
+# Date rule constants
+# ---------------------------------------------------------------------------
+
+# Sentinel value written at offset +61 in relative-time date rules (in_last /
+# not_in_last). A uint32 of 0xFFFFFFFF signals "relative mode"; any other value
+# at that offset is treated as an absolute timestamp.
+_DATE_RELATIVE_SENTINEL = 0xFFFFFFFF
+
+# Byte offset of the "SLst" magic within a 192-byte subexpression header block.
+# Used by the decoder to distinguish nested subexpressions from leaf rules.
+_SUBHDR_SLST_OFF = 53

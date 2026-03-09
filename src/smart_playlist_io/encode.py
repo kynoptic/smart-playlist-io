@@ -24,6 +24,7 @@ import struct
 from typing import Any, Literal, TypedDict, cast
 
 from .constants import (
+    _DATE_RELATIVE_SENTINEL,
     _INFO_LIMITBOOL,
     _INFO_LIMITCHECKED,
     _INFO_LIMITINT,
@@ -432,7 +433,7 @@ def _encode_date_rule(field: str, op: str, value: int, unit: str | None) -> byte
         buf[1] = SIGN_INT_POS if op == "in_last" else SIGN_INT_NEG
         buf[3] = 0x02  # extra_flag: relative-time mode
         buf[4] = LRULE_OTHER
-        buf[61:65] = b"\xff\xff\xff\xff"  # sentinel: marks relative-time (not absolute)
+        struct.pack_into(">I", buf, 61, _DATE_RELATIVE_SENTINEL)  # marks relative-time mode
         buf[65:69] = _encode_time_value(value)
         struct.pack_into(">I", buf, 73, TIME_UNITS[unit])
     elif op == "after":

@@ -25,6 +25,7 @@ import sys
 from pathlib import Path
 
 from .constants import (
+    _DATE_RELATIVE_SENTINEL,
     _INFO_LIMITBOOL,
     _INFO_LIMITCHECKED,
     _INFO_LIMITINT,
@@ -32,6 +33,7 @@ from .constants import (
     _INFO_LIVEUPDATE,
     _INFO_SELECTIONMETHOD,
     _INFO_SELECTIONMETHODSIGN,
+    _SUBHDR_SLST_OFF,
     BOOL_FIELD_IDS,
     DATE_FIELD_IDS,
     ENUM_FIELD_IDS,
@@ -80,7 +82,7 @@ def _decode_int_rule(data: bytes, offset: int) -> tuple[str, int]:
 
     if field_id in DATE_FIELD_IDS:
         sentinel = struct.unpack_from(">I", data, offset + 61)[0]
-        if extra_flag == 0x02 and sentinel == 0xFFFFFFFF:
+        if extra_flag == 0x02 and sentinel == _DATE_RELATIVE_SENTINEL:
             time_encoded = data[offset + 65 : offset + 69]
             time_raw = struct.unpack(">I", bytes(255 - b for b in time_encoded))[0]
             time_val = time_raw + 1
@@ -165,8 +167,9 @@ def _decode_children(data: bytes, child_offset: int, child_count: int) -> tuple[
             break
 
         if (
-            child_offset + 57 <= len(data)
-            and data[child_offset + 53 : child_offset + 57] == b"SLst"
+            child_offset + _SUBHDR_SLST_OFF + 4 <= len(data)
+            and data[child_offset + _SUBHDR_SLST_OFF : child_offset + _SUBHDR_SLST_OFF + 4]
+            == b"SLst"
         ):
             skip_len = struct.unpack_from(">H", data, child_offset + 51)[0]
             sub_rules = _decode_subexpr(data, child_offset)
@@ -280,11 +283,10 @@ def main() -> None:
     print(f"Parsing {xml_path}...", file=sys.stderr)
     with open(xml_path, "rb") as f:
         try:
-            plist = plistlib.load(f)
+            lib = plistlib.load(f)
         except plistlib.InvalidFileException as exc:
             print(f"Error: not a valid plist file: {exc}", file=sys.stderr)
             sys.exit(1)
-    lib = plist
 
     playlists = lib.get("Playlists", [])
     smart = []
