@@ -3,7 +3,7 @@
 Binary format knowledge derived from itunessmart by cvzi
 (https://github.com/cvzi/itunes_smartplaylist), based on
 banshee-itunes-import-plugin by Scott Peterson.
-See THIRD_PARTY_NOTICES for license details.
+See NOTICE for license details.
 
 Handles all Apple Music Smart Criteria features including nested AND/OR groups,
 iCloudStatus 9 ("No Longer Available"), and non-standard boilerplate-free blobs.
