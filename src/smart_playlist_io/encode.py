@@ -286,6 +286,8 @@ def _encode_string_rule(field: str, op: str, value: str, last: bool) -> bytes:
     buf[0] = fid
     buf[1] = sign
     buf[4] = logic_rule
+    if len(value) > 127:
+        raise ValueError(f"String value too long ({len(value)} chars, max 127)")
     buf[52] = len(value) * 2  # UTF-16 byte length (excluding null terminator)
     return bytes(buf) + str_data
 
@@ -363,6 +365,8 @@ def _encode_date_rule(field: str, op: str, value: int, unit: str | None) -> byte
     buf[81:85] = _DATE_FILL
     buf[100] = 0x01
     if op in ("in_last", "not_in_last"):
+        if unit is None:
+            raise ValueError(f"unit is required for {op!r} date rules (e.g. 'days', 'weeks', 'months')")
         buf[1] = SIGN_INT_POS if op == "in_last" else SIGN_INT_NEG
         buf[3] = 0x02  # extra_flag: relative-time mode
         buf[4] = LRULE_OTHER
@@ -462,6 +466,11 @@ def encode(
     to crash (-609). The fix: emit OR directly as the inner subexpression, matching
     how Music.app itself encodes "match any" playlists.
     """
+    if limit_by not in LIMIT_METHODS:
+        raise ValueError(f"Invalid limit_by={limit_by!r}. Valid values: {sorted(LIMIT_METHODS)}")
+    if select_by not in SELECT_METHODS:
+        raise ValueError(f"Invalid select_by={select_by!r}. Valid values: {sorted(SELECT_METHODS)}")
+
     # Smart Info (112 bytes)
     info = bytearray(112)
     info[_INFO_LIVEUPDATE] = 0x01 if live else 0x00
