@@ -44,7 +44,7 @@ info_b64, criteria_b64 = encode_b64(rules, limit=25, select_by="most_played")
 ### Options
 
 | Parameter | Default | Values |
-|-----------|---------|--------|
+| --------- | ------- | ------ |
 | `limit` | `None` | Any int, or `None` to disable |
 | `limit_by` | `"items"` | `"items"`, `"minutes"`, `"hours"`, `"MB"`, `"GB"` |
 | `select_by` | `"most_played"` | `random`, `name`, `album`, `artist`, `genre`, `highest_rated`, `lowest_rated`, `most_played`, `least_played`, `most_recently_played`, `least_recently_played`, `most_recently_added`, `least_recently_added` |
@@ -54,7 +54,7 @@ info_b64, criteria_b64 = encode_b64(rules, limit=25, select_by="most_played")
 ### Fields and operators
 
 | Type | Fields | Operators |
-|------|--------|-----------|
+| ---- | ------ | --------- |
 | String | `Name`, `Artist`, `Album`, `Genre`, `Comments`, `Grouping`, `Composer`, `AlbumArtist`, `Kind` | `is`, `is_not`, `contains`, `not_contains`, `starts`, `ends` |
 | Integer | `Rating` (1–5), `Year`, `Plays`, `BPM`, `BitRate`, `TrackNumber`, `DiskNumber`, `Size`, `Duration`, `Skips` | `is`, `is_not`, `greater`, `less`, `between` |
 | Boolean | `Checked`, `HasArtwork` | `is` |
