@@ -327,13 +327,21 @@ def _encode_int_rule(field: str, op: str, value: int | tuple[int, int]) -> bytes
     scale = 20 if field == "Rating" else 1
 
     if op in ("is", "is_not"):
+        if not isinstance(value, int):
+            raise TypeError(f"Expected int for op {op!r}, got {type(value).__name__}")
         sign = SIGN_INT_POS if op == "is" else SIGN_INT_NEG
         return _make_int_rule(fid, sign, LRULE_IS, value * scale)
     if op == "greater":
+        if not isinstance(value, int):
+            raise TypeError(f"Expected int for op {op!r}, got {type(value).__name__}")
         return _make_int_rule(fid, SIGN_INT_POS, LRULE_GT, value * scale)
     if op == "less":
+        if not isinstance(value, int):
+            raise TypeError(f"Expected int for op {op!r}, got {type(value).__name__}")
         return _make_int_rule(fid, SIGN_INT_POS, LRULE_LT, value * scale)
     if op == "between":
+        if not isinstance(value, tuple):
+            raise TypeError(f"Expected tuple for op 'between', got {type(value).__name__}")
         lo, hi = value
         # For Rating, the upper bound gets +9: confirmed from real library exports
         # (e.g. "between 5 and 5" -> val_a=100, val_b=109). The +9 ensures Music.app's

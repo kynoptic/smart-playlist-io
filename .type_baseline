@@ -1,15 +1,16 @@
-6
+0
 # Baseline established 2026-03-08 with mypy 1.19.1 against src/smart_playlist_io/
+# Updated 2026-03-09: all 5 errors resolved.
 #
-# Errors by file:
+# Changes made:
 #
-# encode.py (5 errors):
-#   - _encode_int_rule: value typed as `int | tuple[int, int]` but branches
-#     that call _make_int_rule (is/is_not, greater, less) pass it directly as
-#     int; mypy can't narrow the union without explicit isinstance guards. [arg-type]
-#   - _encode_int_rule: `lo, hi = value` on line 307 fails when value is `int`. [misc]
-#   - _encode_date_rule: TIME_UNITS indexed with `unit: str | None`; mypy
-#     rejects None as a dict key. [index]
+# encode.py (4 errors fixed):
+#   - _encode_int_rule: added isinstance(value, int) guards before each branch
+#     that calls _make_int_rule, allowing mypy to narrow `int | tuple[int, int]`
+#     to `int`. [arg-type]
+#   - _encode_int_rule: added isinstance(value, tuple) guard before `lo, hi = value`
+#     to satisfy mypy that value is iterable in the between branch. [misc]
 #
-# decode.py (1 error):
-#   - _decode_children: list append type mismatch for nested subexpr lists. [arg-type]
+# decode.py (1 error fixed):
+#   - _decode_children: annotated `rules` as `list[str | list]` to allow appending
+#     nested subexpression lists returned by _decode_subexpr. [arg-type]

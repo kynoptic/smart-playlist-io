@@ -154,7 +154,7 @@ def _decode_string_rule(data: bytes, offset: int) -> tuple[str, int]:
 
 def _decode_children(data: bytes, child_offset: int, child_count: int) -> tuple[list, int]:
     """Decode N child rules/subexpressions starting at child_offset."""
-    rules = []
+    rules: list[str | list] = []
     for _ in range(child_count):
         if child_offset >= len(data):
             rules.append(f"<truncated at {child_offset}>")
@@ -321,5 +321,5 @@ def main() -> None:
         print(output)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
