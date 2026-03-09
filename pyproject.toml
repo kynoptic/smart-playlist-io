@@ -6,9 +6,26 @@ build-backend = "setuptools.build_meta"
 name = "smart-playlist-io"
 version = "1.0.0"
 description = "Encode and decode Apple Music Smart Playlist binary format (Smart Info + Smart Criteria)"
+readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
+authors = [{ name = "kynoptic" }]
+keywords = ["apple-music", "itunes", "playlist", "smart-playlist", "binary"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+"Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Sound/Audio",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/kynoptic/smart-playlist-io"
+Source = "https://github.com/kynoptic/smart-playlist-io"
+"Bug Tracker" = "https://github.com/kynoptic/smart-playlist-io/issues"
 
 [project.scripts]
 decode-smart-playlists = "smart_playlist_io.decode:main"
