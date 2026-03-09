@@ -10,7 +10,6 @@ Purpose: Validates that encode() produces correctly structured binary blobs
 import struct
 
 import pytest
-
 from smart_playlist_io.constants import (
     ENUM_FIELDS,
     ICLOUD_STATUS,
