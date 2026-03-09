@@ -26,7 +26,7 @@ Produces the `Smart Info` and `Smart Criteria` base64 blobs used in Music.app's 
 Requires Python 3.12+.
 
 ```bash
-pip install git+https://github.com/kynoptic/smart-playlist-io.git
+pip install smart-playlist-io
 ```
 
 ## Encode
