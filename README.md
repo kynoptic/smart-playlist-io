@@ -89,7 +89,7 @@ decode-smart-playlists /path/to/Library.xml --out baseline.md
 
 ## Notes
 
-Binary format details and the skip-length padding decision are in [`docs/format-constants.md`](docs/format-constants.md).
+Binary format details and the skip-length padding decision are in [`docs/format-constants.md`](docs/format-constants.md). Architecture decisions behind the boilerplate structure and top-level OR handling are documented in [`docs/adr-001-boilerplate-n2-no-identity-child.md`](docs/adr-001-boilerplate-n2-no-identity-child.md) and [`docs/adr-002-top-level-or-emitted-directly.md`](docs/adr-002-top-level-or-emitted-directly.md).
 
 Format knowledge derived from [itunessmart](https://github.com/cvzi/itunes_smartplaylist) by cvzi and banshee-itunes-import-plugin by Scott Peterson. See [`NOTICE`](NOTICE) for license text.
 

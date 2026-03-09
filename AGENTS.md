@@ -5,7 +5,7 @@ Apple Music Smart Playlist binary format encoder and decoder. Encodes rule trees
 ## Commands
 
 ```bash
-make init    # Create .venv and install dependencies
+make init    # Create .venv, install dependencies, and install pre-commit hooks
 make test    # Run full test suite
 make clean   # Remove .venv and caches
 ```
@@ -52,6 +52,6 @@ tests/
 
 ## Safety
 
-- Encoder is battle-tested: 86 tests + verified Music.app imports for all rule types
+- Encoder is battle-tested: 92 tests + verified Music.app imports for all rule types
 - The +3 skip-length padding is empirically derived — if Music.app imports fail after a macOS update, the padding may have changed
 - String fields are capped at 127 characters (UTF-16 byte length must fit in one byte)
