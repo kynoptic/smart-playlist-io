@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import base64
 import struct
-from typing import Any, Literal, TypedDict, cast
+from typing import Literal, TypedDict, cast
 
 from .constants import (
     _DATE_RELATIVE_SENTINEL,
@@ -559,7 +559,22 @@ def encode(
     return bytes(info), criteria
 
 
-def encode_b64(rules: RuleNode, **kwargs: Any) -> tuple[str, str]:
+def encode_b64(
+    rules: RuleNode,
+    *,
+    limit: int | None = None,
+    limit_by: str = "items",
+    select_by: str = "most_played",
+    live: bool = True,
+    only_checked: bool = False,
+) -> tuple[str, str]:
     """Return (smart_info_b64, smart_criteria_b64) as base64 strings."""
-    info, crit = encode(rules, **kwargs)
+    info, crit = encode(
+        rules,
+        limit=limit,
+        limit_by=limit_by,
+        select_by=select_by,
+        live=live,
+        only_checked=only_checked,
+    )
     return base64.b64encode(info).decode(), base64.b64encode(crit).decode()

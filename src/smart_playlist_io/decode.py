@@ -23,6 +23,7 @@ import plistlib
 import struct
 import sys
 from pathlib import Path
+from typing import Any
 
 from .constants import (
     _DATE_RELATIVE_SENTINEL,
@@ -158,7 +159,9 @@ def _decode_string_rule(data: bytes, offset: int) -> tuple[str, int]:
 # ---------------------------------------------------------------------------
 
 
-def _decode_children(data: bytes, child_offset: int, child_count: int) -> tuple[list, int]:
+def _decode_children(
+    data: bytes, child_offset: int, child_count: int
+) -> tuple[list[str | list[Any]], int]:
     """Decode N child rules/subexpressions starting at child_offset."""
     rules: list[str | list] = []
     for _ in range(child_count):
@@ -186,7 +189,7 @@ def _decode_children(data: bytes, child_offset: int, child_count: int) -> tuple[
     return rules, child_offset
 
 
-def _decode_subexpr(data: bytes, offset: int) -> list:
+def _decode_subexpr(data: bytes, offset: int) -> list[str | list[Any]]:
     """Decode a subexpression (192-byte header + children). Returns [logic, *rules]."""
     child_count = struct.unpack_from(">I", data, offset + 61)[0]
     logic = "OR" if data[offset + 68] == 0x01 else "AND"
@@ -194,7 +197,7 @@ def _decode_subexpr(data: bytes, offset: int) -> list:
     return [logic] + rules
 
 
-def decode_criteria(data: bytes) -> list:
+def decode_criteria(data: bytes) -> list[str | list[Any]]:
     """Decode Smart Criteria blob into a rule tree.
 
     Handles two formats:
@@ -220,7 +223,7 @@ def decode_criteria(data: bytes) -> list:
 # ---------------------------------------------------------------------------
 
 
-def _format_rules(rules: list, indent: int = 0) -> str:
+def _format_rules(rules: list[str | list[Any]], indent: int = 0) -> str:
     """Format decoded rules into readable text."""
     lines = []
     prefix = "  " * indent
