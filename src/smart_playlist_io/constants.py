@@ -170,10 +170,10 @@ SELECT_METHOD_NAMES = {
     0x06: "album",
     0x07: "artist",
     0x09: "genre",
-    0x15: "recently_added",
+    0x15: "recently added",
     0x19: "played",
-    0x1A: "recently_played",
-    0x1C: "highest_rated",
+    0x1A: "recently played",
+    0x1C: "highest rated",
 }
 
 # sign byte: 0 = most/highest (default), 1 = least/lowest/oldest
@@ -183,3 +183,16 @@ SELECT_SIGN = {
     "least_recently_added": 1,
     "lowest_rated": 1,
 }
+
+# ---------------------------------------------------------------------------
+# Smart Info byte offsets
+# ---------------------------------------------------------------------------
+
+_INFO_LIVEUPDATE = 0
+_INFO_MATCHBOOL = 1
+_INFO_LIMITBOOL = 2
+_INFO_LIMITMETHOD = 3
+_INFO_SELECTIONMETHOD = 7
+_INFO_LIMITINT = 8  # 4 bytes big-endian
+_INFO_LIMITCHECKED = 12
+_INFO_SELECTIONMETHODSIGN = 13

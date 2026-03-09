@@ -223,7 +223,11 @@ class TestRoundtripInfoFlags:
         result = decoded_info(
             AND([rule("Rating", "greater", 3)]), limit=50, select_by="least_recently_played"
         )
-        assert "least recently_played" in result
+        assert "least recently played" in result
+
+    def test_should_raise_for_short_info_bytes(self):
+        with pytest.raises(ValueError, match="too short"):
+            decode_info_flags(b"\x00" * 5)
 
 
 # ---------------------------------------------------------------------------

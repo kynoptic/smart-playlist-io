@@ -25,28 +25,30 @@ import sys
 from pathlib import Path
 
 from .constants import (
+    _INFO_LIMITBOOL,
+    _INFO_LIMITCHECKED,
+    _INFO_LIMITINT,
+    _INFO_LIMITMETHOD,
+    _INFO_LIVEUPDATE,
+    _INFO_SELECTIONMETHOD,
+    _INFO_SELECTIONMETHODSIGN,
     BOOL_FIELD_IDS,
     DATE_FIELD_IDS,
     ENUM_FIELD_IDS,
     ENUM_LOOKUPS,
     FIELD_NAMES,
+    INT_FIELDS,
     LIMIT_METHOD_NAMES,
+    LRULE_CONT,
+    LRULE_END,
     LRULE_GT,
+    LRULE_IS,
     LRULE_LT,
+    LRULE_START,
     SELECT_METHOD_NAMES,
     STRING_FIELD_IDS,
     TIME_UNIT_NAMES,
 )
-
-# Smart Info offsets
-_INFO_LIVEUPDATE = 0
-_INFO_LIMITBOOL = 2
-_INFO_LIMITMETHOD = 3
-_INFO_SELECTIONMETHOD = 7
-_INFO_LIMITINT = 8
-_INFO_LIMITCHECKED = 12
-_INFO_SELECTIONMETHODSIGN = 13
-
 
 # ---------------------------------------------------------------------------
 # Rule decoders
@@ -90,12 +92,12 @@ def _decode_int_rule(data: bytes, offset: int) -> tuple[str, int]:
         return f"{field_name} {op} {val_a}", offset + 124
 
     # Int field - Rating is stored as 0-100 (20 per star)
-    scale = 20 if field_id == 0x19 else 1
+    scale = 20 if field_id == INT_FIELDS["Rating"] else 1
     display_a = val_a // scale if scale > 1 else val_a
     if extra_flag == 0x01:  # between
         display_b = (
             (val_b - 9) // scale
-            if field_id == 0x19 and val_b > 0
+            if field_id == INT_FIELDS["Rating"] and val_b > 0
             else val_b // scale
             if scale > 1
             else val_b
@@ -121,10 +123,10 @@ def _decode_string_rule(data: bytes, offset: int) -> tuple[str, int]:
 
     negated = sign in (0x02, 0x03)
     op_map = {
-        0x01: ("is", "is not"),
-        0x02: ("contains", "does not contain"),
-        0x04: ("starts with", "does not start with"),
-        0x08: ("ends with", "does not end with"),
+        LRULE_IS: ("is", "is not"),
+        LRULE_CONT: ("contains", "does not contain"),
+        LRULE_START: ("starts with", "does not start with"),
+        LRULE_END: ("ends with", "does not end with"),
     }
     ops = op_map.get(logic_rule, ("?", "?"))
     op_name = ops[1] if negated else ops[0]
@@ -137,7 +139,7 @@ def _decode_string_rule(data: bytes, offset: int) -> tuple[str, int]:
         str_bytes += b"\x00"
     try:
         value = str_bytes.decode("utf-16-le")
-    except Exception:
+    except (UnicodeDecodeError, ValueError):
         value = f"<{str_len} bytes>"
 
     pos = str_start + str_len
@@ -238,6 +240,8 @@ def _format_rules(rules: list, indent: int = 0) -> str:
 
 def decode_info_flags(info_bytes: bytes) -> str:
     """Decode Smart Info into a compact annotation string."""
+    if len(info_bytes) < 14:
+        raise ValueError(f"info_bytes too short: need at least 14 bytes, got {len(info_bytes)}")
     parts = []
     if info_bytes[_INFO_LIMITCHECKED]:
         parts.append("only checked")
@@ -273,7 +277,12 @@ def main() -> None:
 
     print(f"Parsing {xml_path}...", file=sys.stderr)
     with open(xml_path, "rb") as f:
-        lib = plistlib.load(f)
+        try:
+            plist = plistlib.load(f)
+        except plistlib.InvalidFileException as exc:
+            print(f"Error: not a valid plist file: {exc}", file=sys.stderr)
+            sys.exit(1)
+    lib = plist
 
     playlists = lib.get("Playlists", [])
     smart = []

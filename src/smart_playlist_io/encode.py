@@ -24,6 +24,14 @@ import struct
 from typing import Any
 
 from .constants import (
+    _INFO_LIMITBOOL,
+    _INFO_LIMITCHECKED,
+    _INFO_LIMITINT,
+    _INFO_LIMITMETHOD,
+    _INFO_LIVEUPDATE,
+    _INFO_MATCHBOOL,
+    _INFO_SELECTIONMETHOD,
+    _INFO_SELECTIONMETHODSIGN,
     BOOL_FIELDS,
     DATE_FIELDS,
     ENUM_FIELDS,
@@ -152,12 +160,10 @@ def _encode_string_data(text: str, *, null_terminate: bool = True) -> bytes:
     Apple omits the null terminator from the last string rule in a criteria
     blob - the parser handles end-of-file as a natural string terminator.
     """
-    out = bytearray()
-    for ch in text:
-        out += ch.encode("utf-16-le")
+    out = text.encode("utf-16-le")
     if null_terminate and text:  # empty string needs no null (file just ends before string area)
         out += b"\x00\x00"
-    return bytes(out)
+    return out
 
 
 def _encode_time_value(n: int) -> bytes:
@@ -463,20 +469,6 @@ def _encode_node(node: RuleNode, last: bool = False) -> bytes:
         return _encode_enum_rule(field, op, value)
 
     raise ValueError(f"Unknown field: {field!r}")
-
-
-# ---------------------------------------------------------------------------
-# Smart Info encoding
-# ---------------------------------------------------------------------------
-
-_INFO_LIVEUPDATE = 0
-_INFO_MATCHBOOL = 1
-_INFO_LIMITBOOL = 2
-_INFO_LIMITMETHOD = 3
-_INFO_SELECTIONMETHOD = 7
-_INFO_LIMITINT = 8  # 4 bytes big-endian
-_INFO_LIMITCHECKED = 12
-_INFO_SELECTIONMETHODSIGN = 13
 
 
 # ---------------------------------------------------------------------------
