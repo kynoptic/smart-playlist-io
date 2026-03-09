@@ -10,6 +10,7 @@ import plistlib
 import struct
 
 import pytest
+
 from smart_playlist_io import AND, OR, decode_criteria, decode_info_flags, encode, rule
 from smart_playlist_io.constants import (
     LRULE_CONT,

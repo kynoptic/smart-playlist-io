@@ -72,3 +72,6 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["smart_playlist_io"]
