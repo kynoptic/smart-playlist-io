@@ -25,25 +25,33 @@ import sys
 from pathlib import Path
 
 from .constants import (
-    FIELD_NAMES, STRING_FIELD_IDS, BOOL_FIELD_IDS, DATE_FIELD_IDS, ENUM_FIELD_IDS,
-    ENUM_LOOKUPS, TIME_UNIT_NAMES,
-    LRULE_GT, LRULE_LT,
-    LIMIT_METHOD_NAMES, SELECT_METHOD_NAMES,
+    BOOL_FIELD_IDS,
+    DATE_FIELD_IDS,
+    ENUM_FIELD_IDS,
+    ENUM_LOOKUPS,
+    FIELD_NAMES,
+    LIMIT_METHOD_NAMES,
+    LRULE_GT,
+    LRULE_LT,
+    SELECT_METHOD_NAMES,
+    STRING_FIELD_IDS,
+    TIME_UNIT_NAMES,
 )
 
 # Smart Info offsets
-_INFO_LIVEUPDATE      = 0
-_INFO_LIMITBOOL       = 2
-_INFO_LIMITMETHOD     = 3
+_INFO_LIVEUPDATE = 0
+_INFO_LIMITBOOL = 2
+_INFO_LIMITMETHOD = 3
 _INFO_SELECTIONMETHOD = 7
-_INFO_LIMITINT        = 8
-_INFO_LIMITCHECKED    = 12
+_INFO_LIMITINT = 8
+_INFO_LIMITCHECKED = 12
 _INFO_SELECTIONMETHODSIGN = 13
 
 
 # ---------------------------------------------------------------------------
 # Rule decoders
 # ---------------------------------------------------------------------------
+
 
 def _decode_int_rule(data: bytes, offset: int) -> tuple[str, int]:
     """Decode a 124-byte int/enum/bool/date rule."""
@@ -69,7 +77,7 @@ def _decode_int_rule(data: bytes, offset: int) -> tuple[str, int]:
     if field_id in DATE_FIELD_IDS:
         sentinel = struct.unpack_from(">I", data, offset + 61)[0]
         if extra_flag == 0x02 and sentinel == 0xFFFFFFFF:
-            time_encoded = data[offset + 65:offset + 69]
+            time_encoded = data[offset + 65 : offset + 69]
             time_raw = struct.unpack(">I", bytes(255 - b for b in time_encoded))[0]
             time_val = time_raw + 1
             time_unit_secs = struct.unpack_from(">I", data, offset + 73)[0]
@@ -85,7 +93,13 @@ def _decode_int_rule(data: bytes, offset: int) -> tuple[str, int]:
     scale = 20 if field_id == 0x19 else 1
     display_a = val_a // scale if scale > 1 else val_a
     if extra_flag == 0x01:  # between
-        display_b = (val_b - 9) // scale if field_id == 0x19 and val_b > 0 else val_b // scale if scale > 1 else val_b
+        display_b = (
+            (val_b - 9) // scale
+            if field_id == 0x19 and val_b > 0
+            else val_b // scale
+            if scale > 1
+            else val_b
+        )
         op_str = "not between" if negated else "between"
         return f"{field_name} {op_str} {display_a} and {display_b}", offset + 124
 
@@ -107,7 +121,8 @@ def _decode_string_rule(data: bytes, offset: int) -> tuple[str, int]:
 
     negated = sign in (0x02, 0x03)
     op_map = {
-        0x01: ("is", "is not"), 0x02: ("contains", "does not contain"),
+        0x01: ("is", "is not"),
+        0x02: ("contains", "does not contain"),
         0x04: ("starts with", "does not start with"),
         0x08: ("ends with", "does not end with"),
     }
@@ -116,7 +131,7 @@ def _decode_string_rule(data: bytes, offset: int) -> tuple[str, int]:
 
     str_start = offset + 54
     available = min(str_len, len(data) - str_start)
-    str_bytes = data[str_start:str_start + available]
+    str_bytes = data[str_start : str_start + available]
     # Pad with 0x00 if we have an odd byte count (last string in blob may be truncated)
     if len(str_bytes) % 2 != 0:
         str_bytes += b"\x00"
@@ -136,6 +151,7 @@ def _decode_string_rule(data: bytes, offset: int) -> tuple[str, int]:
 # Subexpression / group decoders
 # ---------------------------------------------------------------------------
 
+
 def _decode_children(data: bytes, child_offset: int, child_count: int) -> tuple[list, int]:
     """Decode N child rules/subexpressions starting at child_offset."""
     rules = []
@@ -144,8 +160,10 @@ def _decode_children(data: bytes, child_offset: int, child_count: int) -> tuple[
             rules.append(f"<truncated at {child_offset}>")
             break
 
-        if (child_offset + 57 <= len(data)
-                and data[child_offset + 53:child_offset + 57] == b"SLst"):
+        if (
+            child_offset + 57 <= len(data)
+            and data[child_offset + 53 : child_offset + 57] == b"SLst"
+        ):
             skip_len = struct.unpack_from(">H", data, child_offset + 51)[0]
             sub_rules = _decode_subexpr(data, child_offset)
             rules.append(sub_rules)
@@ -177,7 +195,7 @@ def decode_criteria(data: bytes) -> list:
     2. Non-standard: SLst directly at offset 0 (simpler playlists without MediaKind filter)
     """
     # Standard format with 579-byte boilerplate
-    if len(data) >= 579 + 192 and data[579 + 53:579 + 57] == b"SLst":
+    if len(data) >= 579 + 192 and data[579 + 53 : 579 + 57] == b"SLst":
         return _decode_subexpr(data, 579)
 
     # Non-standard: starts with SLst directly (139-byte header + children)
@@ -193,6 +211,7 @@ def decode_criteria(data: bytes) -> list:
 # ---------------------------------------------------------------------------
 # Formatting
 # ---------------------------------------------------------------------------
+
 
 def _format_rules(rules: list, indent: int = 0) -> str:
     """Format decoded rules into readable text."""
@@ -238,11 +257,12 @@ def decode_info_flags(info_bytes: bytes) -> str:
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Decode smart playlists from Library XML")
-    parser.add_argument("library",
-                        help="Path to Library XML export")
+    parser.add_argument("library", help="Path to Library XML export")
     parser.add_argument("--out", help="Write output to file instead of stdout")
     args = parser.parse_args()
 

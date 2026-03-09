@@ -8,17 +8,36 @@ Purpose: Validates that encode() produces correctly structured binary blobs
 """
 
 import struct
+
 import pytest
 
-from smart_playlist_io.encode import (
-    AND, OR, rule, encode, encode_b64,
-    _BOILERPLATE, _SUBEXPR_BLOCK_SIZE, _SUBEXPR_SKIP_BASE,
-    _make_int_rule, _make_subexpr_header, _encode_time_value,
-)
 from smart_playlist_io.constants import (
-    SIGN_INT_POS, SIGN_INT_NEG, SIGN_STR_POS, SIGN_STR_NEG,
-    LRULE_IS, LRULE_CONT, LRULE_START, LRULE_END, LRULE_GT, LRULE_LT, LRULE_OTHER,
-    ENUM_FIELDS, LOVE_STATUS, ICLOUD_STATUS,
+    ENUM_FIELDS,
+    ICLOUD_STATUS,
+    LOVE_STATUS,
+    LRULE_END,
+    LRULE_GT,
+    LRULE_IS,
+    LRULE_LT,
+    LRULE_OTHER,
+    LRULE_START,
+    SIGN_INT_NEG,
+    SIGN_INT_POS,
+    SIGN_STR_NEG,
+    SIGN_STR_POS,
+)
+from smart_playlist_io.encode import (
+    _BOILERPLATE,
+    _SUBEXPR_BLOCK_SIZE,
+    _SUBEXPR_SKIP_BASE,
+    AND,
+    OR,
+    _encode_time_value,
+    _make_int_rule,
+    _make_subexpr_header,
+    encode,
+    encode_b64,
+    rule,
 )
 
 BOILERPLATE_LEN = 579
@@ -30,6 +49,7 @@ INT_RULE_LEN = 124
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def criteria_for(rules_node, **kwargs):
     """Return raw criteria bytes for the given rule tree."""
     _, crit = encode(rules_node, **kwargs)
@@ -38,17 +58,18 @@ def criteria_for(rules_node, **kwargs):
 
 def inner_subexpr(crit):
     """Return the 192-byte inner subexpression header."""
-    return crit[BOILERPLATE_LEN:BOILERPLATE_LEN + INNER_SUBEXPR_LEN]
+    return crit[BOILERPLATE_LEN : BOILERPLATE_LEN + INNER_SUBEXPR_LEN]
 
 
 def rules_blob(crit):
     """Return everything after boilerplate + inner subexpr header."""
-    return crit[BOILERPLATE_LEN + INNER_SUBEXPR_LEN:]
+    return crit[BOILERPLATE_LEN + INNER_SUBEXPR_LEN :]
 
 
 # ---------------------------------------------------------------------------
 # _make_int_rule
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestMakeIntRule:
@@ -100,6 +121,7 @@ class TestMakeIntRule:
 # _make_subexpr_header
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestMakeSubexprHeader:
     def test_should_be_exactly_192_bytes(self):
@@ -142,6 +164,7 @@ class TestMakeSubexprHeader:
 # _encode_time_value
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestEncodeTimeValue:
     def test_should_be_bitwise_complement_of_n_minus_1(self):
@@ -157,6 +180,7 @@ class TestEncodeTimeValue:
 # ---------------------------------------------------------------------------
 # Criteria structure
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestCriteriaStructure:
@@ -174,10 +198,14 @@ class TestCriteriaStructure:
         assert len(crit) == BOILERPLATE_LEN + INNER_SUBEXPR_LEN + INT_RULE_LEN
 
     def test_should_have_correct_length_for_two_int_rules(self):
-        crit = criteria_for(AND([
-            rule("Rating", "greater", 3),
-            rule("Year", "greater", 2009),
-        ]))
+        crit = criteria_for(
+            AND(
+                [
+                    rule("Rating", "greater", 3),
+                    rule("Year", "greater", 2009),
+                ]
+            )
+        )
         assert len(crit) == BOILERPLATE_LEN + INNER_SUBEXPR_LEN + 2 * INT_RULE_LEN
 
     def test_should_wrap_bare_rule_in_and(self):
@@ -188,10 +216,14 @@ class TestCriteriaStructure:
 
     def test_should_preserve_top_level_or(self):
         # Top-level OR emits OR directly as the inner subexpression
-        crit = criteria_for(OR([
-            rule("Genre", "contains", "Jazz"),
-            rule("Genre", "contains", "Blues"),
-        ]))
+        crit = criteria_for(
+            OR(
+                [
+                    rule("Genre", "contains", "Jazz"),
+                    rule("Genre", "contains", "Blues"),
+                ]
+            )
+        )
         hdr = inner_subexpr(crit)
         assert hdr[68] == 0x01  # inner subexpr is OR
 
@@ -199,6 +231,7 @@ class TestCriteriaStructure:
 # ---------------------------------------------------------------------------
 # Rating encoding
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestRatingEncoding:
@@ -244,6 +277,7 @@ class TestRatingEncoding:
 # Bool encoding
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestBoolEncoding:
     def test_should_use_sign_int_neg_for_true(self):
@@ -261,6 +295,7 @@ class TestBoolEncoding:
 # String encoding
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestStringEncoding:
     def test_should_set_utf16_byte_length_at_offset_52(self):
@@ -271,14 +306,18 @@ class TestStringEncoding:
 
     def test_should_include_null_terminator_for_non_last_string(self):
         # Two string rules: first should have null terminator
-        crit = criteria_for(AND([
-            rule("Genre", "contains", "Jazz"),
-            rule("Genre", "contains", "Blues"),
-        ]))
+        crit = criteria_for(
+            AND(
+                [
+                    rule("Genre", "contains", "Jazz"),
+                    rule("Genre", "contains", "Blues"),
+                ]
+            )
+        )
         blob = rules_blob(crit)
         # First rule header is 54 bytes, "Jazz" is 8 bytes UTF-16, then 2 null bytes
         jazz_end = 54 + 8
-        assert blob[jazz_end:jazz_end + 2] == b"\x00\x00"
+        assert blob[jazz_end : jazz_end + 2] == b"\x00\x00"
 
     def test_should_omit_null_terminator_for_last_string(self):
         # Single string rule: last in blob, no null terminator
@@ -302,6 +341,7 @@ class TestStringEncoding:
 # ---------------------------------------------------------------------------
 # Date encoding
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestDateEncoding:
@@ -349,6 +389,7 @@ class TestDateEncoding:
 # Smart Info encoding
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestSmartInfoEncoding:
     def test_should_set_live_update_byte(self):
@@ -368,13 +409,15 @@ class TestSmartInfoEncoding:
         assert struct.unpack_from(">I", info, 8)[0] == 0
 
     def test_should_set_selection_sign_for_least_recently_played(self):
-        info, _ = encode(AND([rule("Rating", "greater", 3)]),
-                         limit=25, select_by="least_recently_played")
+        info, _ = encode(
+            AND([rule("Rating", "greater", 3)]), limit=25, select_by="least_recently_played"
+        )
         assert info[13] == 1  # sign = 1 -> least
 
     def test_should_leave_selection_sign_zero_for_most_recently_played(self):
-        info, _ = encode(AND([rule("Rating", "greater", 3)]),
-                         limit=25, select_by="most_recently_played")
+        info, _ = encode(
+            AND([rule("Rating", "greater", 3)]), limit=25, select_by="most_recently_played"
+        )
         assert info[13] == 0
 
     def test_should_be_112_bytes(self):
@@ -390,10 +433,12 @@ class TestSmartInfoEncoding:
 # encode_b64
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestEncodeB64:
     def test_should_return_valid_base64_strings(self):
         import base64
+
         si, sc = encode_b64(AND([rule("Rating", "greater", 3)]))
         # Should not raise
         base64.b64decode(si)
@@ -401,6 +446,7 @@ class TestEncodeB64:
 
     def test_should_round_trip_to_same_bytes_as_encode(self):
         import base64
+
         rules_node = AND([rule("Rating", "greater", 3)])
         si, sc = encode_b64(rules_node)
         info, crit = encode(rules_node)
@@ -415,6 +461,7 @@ class TestEncodeB64:
 # Every real library export shows skip_length = 139 + children_bytes.
 # These tests guard the empirically-derived +3 padding.
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestSkipLengthPadding:
@@ -436,10 +483,14 @@ class TestSkipLengthPadding:
         assert skip == 139 + INT_RULE_LEN
 
     def test_inner_subexpr_skip_should_use_139_base_for_string_rules(self):
-        crit = criteria_for(AND([
-            rule("Genre", "contains", "Jazz"),
-            rule("Genre", "contains", "Blues"),
-        ]))
+        crit = criteria_for(
+            AND(
+                [
+                    rule("Genre", "contains", "Jazz"),
+                    rule("Genre", "contains", "Blues"),
+                ]
+            )
+        )
         hdr = inner_subexpr(crit)
         skip = struct.unpack_from(">H", hdr, 51)[0]
         children_bytes = len(crit) - BOILERPLATE_LEN - INNER_SUBEXPR_LEN
@@ -454,22 +505,31 @@ class TestSkipLengthPadding:
 # in the inner subexpression - no wrapper needed.
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestTopLevelOR:
     def test_should_emit_or_logic_directly(self):
-        crit = criteria_for(OR([
-            rule("Genre", "contains", "Jazz"),
-            rule("Genre", "contains", "Blues"),
-        ]))
+        crit = criteria_for(
+            OR(
+                [
+                    rule("Genre", "contains", "Jazz"),
+                    rule("Genre", "contains", "Blues"),
+                ]
+            )
+        )
         hdr = inner_subexpr(crit)
         assert hdr[68] == 0x01  # OR, not AND
 
     def test_should_have_correct_child_count(self):
-        crit = criteria_for(OR([
-            rule("Genre", "contains", "Idm"),
-            rule("Genre", "contains", "Trip Hop"),
-            rule("Genre", "contains", "Downtempo"),
-        ]))
+        crit = criteria_for(
+            OR(
+                [
+                    rule("Genre", "contains", "Idm"),
+                    rule("Genre", "contains", "Trip Hop"),
+                    rule("Genre", "contains", "Downtempo"),
+                ]
+            )
+        )
         hdr = inner_subexpr(crit)
         count = struct.unpack_from(">I", hdr, 61)[0]
         assert count == 3  # 3 children, not 1 (wrapped OR)
@@ -477,20 +537,28 @@ class TestTopLevelOR:
     def test_should_not_add_extra_nesting_layer(self):
         # Regression: old code wrapped OR in AND, producing boilerplate + AND header
         # + OR header + rules. Correct: boilerplate + OR header + rules.
-        crit = criteria_for(OR([
-            rule("Genre", "contains", "Jazz"),
-            rule("Genre", "contains", "Blues"),
-        ]))
+        crit = criteria_for(
+            OR(
+                [
+                    rule("Genre", "contains", "Jazz"),
+                    rule("Genre", "contains", "Blues"),
+                ]
+            )
+        )
         # Rules should start immediately after inner subexpr header, no nested header
         blob = rules_blob(crit)
         # First byte of first rule should be Genre field_id (0x08), not subexpr prefix
         assert blob[0] == 0x08
 
     def test_skip_length_should_cover_all_children_directly(self):
-        crit = criteria_for(OR([
-            rule("Genre", "contains", "Jazz"),
-            rule("Genre", "contains", "Blues"),
-        ]))
+        crit = criteria_for(
+            OR(
+                [
+                    rule("Genre", "contains", "Jazz"),
+                    rule("Genre", "contains", "Blues"),
+                ]
+            )
+        )
         hdr = inner_subexpr(crit)
         skip = struct.unpack_from(">H", hdr, 51)[0]
         children_bytes = len(crit) - BOILERPLATE_LEN - INNER_SUBEXPR_LEN
@@ -504,16 +572,23 @@ class TestTopLevelOR:
 # have correct skip-lengths and child counts at all levels.
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestNestedGroups:
     def test_nested_or_should_create_subexpr_with_or_logic(self):
-        crit = criteria_for(AND([
-            rule("Checked", "is", True),
-            OR([
-                rule("Genre", "contains", "Jazz"),
-                rule("Genre", "contains", "Blues"),
-            ]),
-        ]))
+        crit = criteria_for(
+            AND(
+                [
+                    rule("Checked", "is", True),
+                    OR(
+                        [
+                            rule("Genre", "contains", "Jazz"),
+                            rule("Genre", "contains", "Blues"),
+                        ]
+                    ),
+                ]
+            )
+        )
         hdr = inner_subexpr(crit)
         # Inner subexpr is AND with 2 children: bool rule + OR group
         assert hdr[68] == 0x00  # AND
@@ -521,31 +596,43 @@ class TestNestedGroups:
         assert count == 2
 
     def test_nested_or_subexpr_should_have_correct_child_count(self):
-        crit = criteria_for(AND([
-            rule("Checked", "is", True),
-            OR([
-                rule("Genre", "contains", "Jazz"),
-                rule("Genre", "contains", "Blues"),
-                rule("Genre", "contains", "Funk"),
-            ]),
-        ]))
+        crit = criteria_for(
+            AND(
+                [
+                    rule("Checked", "is", True),
+                    OR(
+                        [
+                            rule("Genre", "contains", "Jazz"),
+                            rule("Genre", "contains", "Blues"),
+                            rule("Genre", "contains", "Funk"),
+                        ]
+                    ),
+                ]
+            )
+        )
         blob = rules_blob(crit)
         # First child: bool rule (124 bytes). Second child: OR subexpr header.
-        or_header = blob[INT_RULE_LEN:INT_RULE_LEN + INNER_SUBEXPR_LEN]
+        or_header = blob[INT_RULE_LEN : INT_RULE_LEN + INNER_SUBEXPR_LEN]
         assert or_header[68] == 0x01  # OR
         or_count = struct.unpack_from(">I", or_header, 61)[0]
         assert or_count == 3
 
     def test_nested_or_skip_length_should_use_139_base(self):
-        crit = criteria_for(AND([
-            rule("Checked", "is", True),
-            OR([
-                rule("Genre", "contains", "Jazz"),
-                rule("Genre", "contains", "Blues"),
-            ]),
-        ]))
+        crit = criteria_for(
+            AND(
+                [
+                    rule("Checked", "is", True),
+                    OR(
+                        [
+                            rule("Genre", "contains", "Jazz"),
+                            rule("Genre", "contains", "Blues"),
+                        ]
+                    ),
+                ]
+            )
+        )
         blob = rules_blob(crit)
-        or_header = blob[INT_RULE_LEN:INT_RULE_LEN + INNER_SUBEXPR_LEN]
+        or_header = blob[INT_RULE_LEN : INT_RULE_LEN + INNER_SUBEXPR_LEN]
         or_skip = struct.unpack_from(">H", or_header, 51)[0]
         # Children of the OR: everything after its header to end of blob
         or_children_bytes = len(blob) - INT_RULE_LEN - INNER_SUBEXPR_LEN
@@ -555,6 +642,7 @@ class TestNestedGroups:
 # ---------------------------------------------------------------------------
 # Enum encoding
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestEnumEncoding:
@@ -591,6 +679,7 @@ class TestEnumEncoding:
 # Non-Rating integer fields (must NOT scale by 20)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestNonRatingIntFields:
     def test_year_should_not_scale(self):
@@ -623,6 +712,7 @@ class TestNonRatingIntFields:
 # ---------------------------------------------------------------------------
 # Additional string operator coverage
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestStringOperators:
@@ -658,6 +748,7 @@ class TestStringOperators:
 # Date absolute timestamp ops
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestDateAbsoluteOps:
     def test_should_use_lrule_gt_for_after(self):
@@ -691,6 +782,7 @@ class TestDateAbsoluteOps:
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestErrorHandling:

@@ -20,10 +20,16 @@ Decoder usage:
     flags = decode_info_flags(info_bytes)
 """
 
-from .encode import AND, OR, rule, encode, encode_b64, RuleNode
 from .decode import decode_criteria, decode_info_flags
+from .encode import AND, OR, RuleNode, encode, encode_b64, rule
 
 __all__ = [
-    "AND", "OR", "rule", "encode", "encode_b64", "RuleNode",
-    "decode_criteria", "decode_info_flags",
+    "AND",
+    "OR",
+    "rule",
+    "encode",
+    "encode_b64",
+    "RuleNode",
+    "decode_criteria",
+    "decode_info_flags",
 ]

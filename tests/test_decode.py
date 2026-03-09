@@ -11,15 +11,21 @@ import struct
 
 import pytest
 
-from smart_playlist_io import AND, OR, rule, encode, decode_criteria, decode_info_flags
-from smart_playlist_io.constants import SIGN_INT_NEG, SIGN_INT_POS, SIGN_STR_POS, LRULE_CONT, LRULE_GT
+from smart_playlist_io import AND, OR, decode_criteria, decode_info_flags, encode, rule
+from smart_playlist_io.constants import (
+    LRULE_CONT,
+    LRULE_GT,
+    SIGN_INT_NEG,
+    SIGN_INT_POS,
+    SIGN_STR_POS,
+)
 from smart_playlist_io.decode import _format_rules
 from smart_playlist_io.encode import _BOILERPLATE, _make_int_rule, _make_subexpr_header
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def decoded_rules(rules_node, **kwargs):
     """Encode a rule tree and decode it back, returning the decoded list."""
@@ -36,6 +42,7 @@ def decoded_info(rules_node, **kwargs):
 # ---------------------------------------------------------------------------
 # Basic roundtrip: single rules
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestRoundtripIntRules:
@@ -133,32 +140,47 @@ class TestRoundtripEnumRules:
 # Roundtrip: groups and nesting
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestRoundtripGroups:
     def test_should_roundtrip_and_group(self):
-        result = decoded_rules(AND([
-            rule("Rating", "greater", 3),
-            rule("Year", "greater", 2009),
-        ]))
+        result = decoded_rules(
+            AND(
+                [
+                    rule("Rating", "greater", 3),
+                    rule("Year", "greater", 2009),
+                ]
+            )
+        )
         assert result[0] == "AND"
         assert len(result) == 3  # AND + 2 rules
 
     def test_should_roundtrip_or_group(self):
-        result = decoded_rules(OR([
-            rule("Genre", "contains", "Jazz"),
-            rule("Genre", "contains", "Blues"),
-        ]))
+        result = decoded_rules(
+            OR(
+                [
+                    rule("Genre", "contains", "Jazz"),
+                    rule("Genre", "contains", "Blues"),
+                ]
+            )
+        )
         assert result[0] == "OR"
         assert len(result) == 3
 
     def test_should_roundtrip_nested_or_in_and(self):
-        result = decoded_rules(AND([
-            rule("Checked", "is", True),
-            OR([
-                rule("Genre", "contains", "Jazz"),
-                rule("Genre", "contains", "Blues"),
-            ]),
-        ]))
+        result = decoded_rules(
+            AND(
+                [
+                    rule("Checked", "is", True),
+                    OR(
+                        [
+                            rule("Genre", "contains", "Jazz"),
+                            rule("Genre", "contains", "Blues"),
+                        ]
+                    ),
+                ]
+            )
+        )
         assert result[0] == "AND"
         assert len(result) == 3
         # Second child should be an OR sublist
@@ -172,6 +194,7 @@ class TestRoundtripGroups:
 # Smart Info flags roundtrip
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 class TestRoundtripInfoFlags:
     def test_should_roundtrip_live_updating(self):
@@ -179,8 +202,9 @@ class TestRoundtripInfoFlags:
         assert "live updating" in result
 
     def test_should_roundtrip_limit(self):
-        result = decoded_info(AND([rule("Rating", "greater", 3)]),
-                              limit=25, select_by="most_played")
+        result = decoded_info(
+            AND([rule("Rating", "greater", 3)]), limit=25, select_by="most_played"
+        )
         assert "limit 25 items" in result
         assert "most played" in result
 
@@ -193,14 +217,16 @@ class TestRoundtripInfoFlags:
         assert result == "no flags"
 
     def test_should_roundtrip_least_selection(self):
-        result = decoded_info(AND([rule("Rating", "greater", 3)]),
-                              limit=50, select_by="least_recently_played")
+        result = decoded_info(
+            AND([rule("Rating", "greater", 3)]), limit=50, select_by="least_recently_played"
+        )
         assert "least recently_played" in result
 
 
 # ---------------------------------------------------------------------------
 # Absolute date ops roundtrip
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestRoundtripAbsoluteDateOps:
@@ -212,6 +238,7 @@ class TestRoundtripAbsoluteDateOps:
 # ---------------------------------------------------------------------------
 # decode_criteria format handling
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestDecodeCriteriaFormats:
@@ -225,8 +252,8 @@ class TestDecodeCriteriaFormats:
         # Some simpler playlists from older Music.app versions use this layout.
         header = bytearray(139)
         header[0:4] = b"SLst"
-        struct.pack_into(">I", header, 8, 1)   # child_count = 1
-        header[15] = 0x00                       # AND logic
+        struct.pack_into(">I", header, 8, 1)  # child_count = 1
+        header[15] = 0x00  # AND logic
         int_rule = _make_int_rule(0x19, SIGN_INT_POS, LRULE_GT, 60)  # Rating > 3
         result = decode_criteria(bytes(header) + int_rule)
         assert result[0] == "AND"
@@ -235,8 +262,8 @@ class TestDecodeCriteriaFormats:
     def test_should_decode_nonstandard_or_logic(self):
         header = bytearray(139)
         header[0:4] = b"SLst"
-        struct.pack_into(">I", header, 8, 1)   # child_count = 1
-        header[15] = 0x01                       # OR logic
+        struct.pack_into(">I", header, 8, 1)  # child_count = 1
+        header[15] = 0x01  # OR logic
         int_rule = _make_int_rule(0x19, SIGN_INT_POS, LRULE_GT, 60)
         result = decode_criteria(bytes(header) + int_rule)
         assert result[0] == "OR"
@@ -245,6 +272,7 @@ class TestDecodeCriteriaFormats:
 # ---------------------------------------------------------------------------
 # Decoder edge cases: malformed / truncated data
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestDecodeEdgeCases:
@@ -262,18 +290,18 @@ class TestDecodeEdgeCases:
         # Manually construct a negated absolute-date rule (e.g. "not after <ts>").
         # The encoder does not produce this op, but real library exports may contain it.
         buf = bytearray(124)
-        buf[0] = 0x10               # DateAdded field_id
-        buf[1] = SIGN_INT_NEG       # negated
-        buf[3] = 0x00               # not relative-time, not range
-        buf[4] = LRULE_GT           # greater-than comparison
-        buf[52] = 0x44              # required constant
+        buf[0] = 0x10  # DateAdded field_id
+        buf[1] = SIGN_INT_NEG  # negated
+        buf[3] = 0x00  # not relative-time, not range
+        buf[4] = LRULE_GT  # greater-than comparison
+        buf[52] = 0x44  # required constant
         buf[53:57] = b"\x2d\xae\x2d\xae"
         buf[57:61] = b"\x2d\xae\x2d\xae"
         struct.pack_into(">I", buf, 57, 700000000)
-        buf[61:65] = b"\x00\x00\x00\x00"   # sentinel != 0xFFFFFFFF → absolute path
+        buf[61:65] = b"\x00\x00\x00\x00"  # sentinel != 0xFFFFFFFF → absolute path
         buf[77:81] = b"\x2d\xae\x2d\xae"
         buf[81:85] = b"\x2d\xae\x2d\xae"
-        buf[100] = 0x01             # required constant
+        buf[100] = 0x01  # required constant
         date_rule = bytes(buf)
         inner_header = _make_subexpr_header("AND", 1, len(date_rule))
         data = _BOILERPLATE + inner_header + date_rule
@@ -285,22 +313,23 @@ class TestDecodeEdgeCases:
         # Construct a string rule whose str_len byte is odd (5).  The decoder pads
         # the raw bytes to an even length before decoding as UTF-16-LE.
         string_header = bytearray(54)
-        string_header[0] = 0x08    # Genre field_id
+        string_header[0] = 0x08  # Genre field_id
         string_header[1] = SIGN_STR_POS
         string_header[4] = LRULE_CONT
-        string_header[52] = 5      # str_len = 5 (odd)
+        string_header[52] = 5  # str_len = 5 (odd)
         # "Jaz" UTF-16-LE = 6 bytes; we supply only 5 to make len(str_bytes) odd
         string_data = b"\x4a\x00\x61\x00\x7a"
         inner_header = _make_subexpr_header("AND", 1, 54 + len(string_data))
         data = _BOILERPLATE + inner_header + bytes(string_header) + string_data
         result = decode_criteria(data)
         assert result[0] == "AND"
-        assert "Genre" in result[1]   # decoded despite odd byte count
+        assert "Genre" in result[1]  # decoded despite odd byte count
 
 
 # ---------------------------------------------------------------------------
 # _format_rules helper
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestFormatRules:
@@ -327,12 +356,13 @@ class TestFormatRules:
 
     def test_should_apply_indent_prefix(self):
         result = _format_rules(["AND", "Rating > 3"], indent=2)
-        assert result.startswith("    AND:")   # 4 spaces = indent 2
+        assert result.startswith("    AND:")  # 4 spaces = indent 2
 
 
 # ---------------------------------------------------------------------------
 # CLI: main() entry point
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 class TestDecodeCLI:
@@ -343,11 +373,15 @@ class TestDecodeCLI:
 
     def test_should_decode_library_xml_to_stdout(self, tmp_path, monkeypatch, capsys):
         from smart_playlist_io.decode import main
+
         info, crit = encode(AND([rule("Rating", "greater", 3)]), live=True)
         xml_path = tmp_path / "Library.xml"
-        self._make_library_xml(xml_path, [
-            {"Name": "Top Rated", "Smart Info": info, "Smart Criteria": crit},
-        ])
+        self._make_library_xml(
+            xml_path,
+            [
+                {"Name": "Top Rated", "Smart Info": info, "Smart Criteria": crit},
+            ],
+        )
         monkeypatch.setattr("sys.argv", ["decode-smart-playlists", str(xml_path)])
         main()
         out = capsys.readouterr().out
@@ -356,30 +390,46 @@ class TestDecodeCLI:
 
     def test_should_write_output_to_file(self, tmp_path, monkeypatch):
         from smart_playlist_io.decode import main
+
         info, crit = encode(AND([rule("Rating", "greater", 3)]))
         xml_path = tmp_path / "Library.xml"
-        self._make_library_xml(xml_path, [
-            {"Name": "Saved", "Smart Info": info, "Smart Criteria": crit},
-        ])
+        self._make_library_xml(
+            xml_path,
+            [
+                {"Name": "Saved", "Smart Info": info, "Smart Criteria": crit},
+            ],
+        )
         out_path = tmp_path / "output.md"
-        monkeypatch.setattr("sys.argv", [
-            "decode-smart-playlists", str(xml_path), "--out", str(out_path),
-        ])
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "decode-smart-playlists",
+                str(xml_path),
+                "--out",
+                str(out_path),
+            ],
+        )
         main()
         assert out_path.exists()
         assert "Saved" in out_path.read_text()
 
     def test_should_exit_when_file_not_found(self, tmp_path, monkeypatch):
         from smart_playlist_io.decode import main
-        monkeypatch.setattr("sys.argv", [
-            "decode-smart-playlists", str(tmp_path / "nonexistent.xml"),
-        ])
+
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "decode-smart-playlists",
+                str(tmp_path / "nonexistent.xml"),
+            ],
+        )
         with pytest.raises(SystemExit) as exc_info:
             main()
         assert exc_info.value.code == 1
 
     def test_should_skip_playlists_without_smart_fields(self, tmp_path, monkeypatch, capsys):
         from smart_playlist_io.decode import main
+
         xml_path = tmp_path / "Library.xml"
         # One non-smart playlist, should produce 0 smart playlists in output
         self._make_library_xml(xml_path, [{"Name": "Manual Playlist"}])

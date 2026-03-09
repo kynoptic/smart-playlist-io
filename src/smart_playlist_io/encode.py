@@ -24,11 +24,27 @@ import struct
 from typing import Any
 
 from .constants import (
-    STRING_FIELDS, INT_FIELDS, BOOL_FIELDS, DATE_FIELDS, ENUM_FIELDS,
-    ENUM_MAPS, TIME_UNITS,
-    SIGN_INT_POS, SIGN_INT_NEG, SIGN_STR_POS, SIGN_STR_NEG,
-    LRULE_OTHER, LRULE_IS, LRULE_CONT, LRULE_START, LRULE_END, LRULE_GT, LRULE_LT,
-    LIMIT_METHODS, SELECT_METHODS, SELECT_SIGN,
+    BOOL_FIELDS,
+    DATE_FIELDS,
+    ENUM_FIELDS,
+    ENUM_MAPS,
+    INT_FIELDS,
+    LIMIT_METHODS,
+    LRULE_CONT,
+    LRULE_END,
+    LRULE_GT,
+    LRULE_IS,
+    LRULE_LT,
+    LRULE_OTHER,
+    LRULE_START,
+    SELECT_METHODS,
+    SELECT_SIGN,
+    SIGN_INT_NEG,
+    SIGN_INT_POS,
+    SIGN_STR_NEG,
+    SIGN_STR_POS,
+    STRING_FIELDS,
+    TIME_UNITS,
 )
 
 # Type alias for the rule/group tree built by AND(), OR(), and rule().
@@ -96,6 +112,7 @@ _SUBEXPR_SKIP_BASE = 139
 # Rule / group builders
 # ---------------------------------------------------------------------------
 
+
 def AND(children: list[RuleNode]) -> RuleNode:
     """Create an AND group."""
     return {"type": "group", "logic": "AND", "children": children}
@@ -107,7 +124,10 @@ def OR(children: list[RuleNode]) -> RuleNode:
 
 
 def rule(
-    field: str, op: str, value: str | int | bool | tuple[int, int], unit: str | None = None,
+    field: str,
+    op: str,
+    value: str | int | bool | tuple[int, int],
+    unit: str | None = None,
 ) -> RuleNode:
     """Create a single rule.
 
@@ -124,6 +144,7 @@ def rule(
 # ---------------------------------------------------------------------------
 # Encoding internals
 # ---------------------------------------------------------------------------
+
 
 def _encode_string_data(text: str, *, null_terminate: bool = True) -> bytes:
     """Encode a string as UTF-16 LE with optional null terminator pair.
@@ -146,20 +167,24 @@ def _encode_time_value(n: int) -> bytes:
 
 
 # Offsets within a 124-byte int/enum/bool/date rule block
-_IRULE_OFF_FIELD_ID   = 0
-_IRULE_OFF_SIGN       = 1
-_IRULE_OFF_EXTRA_FLAG = 3   # range(1) or relative-time(2) modifier
+_IRULE_OFF_FIELD_ID = 0
+_IRULE_OFF_SIGN = 1
+_IRULE_OFF_EXTRA_FLAG = 3  # range(1) or relative-time(2) modifier
 _IRULE_OFF_LOGIC_RULE = 4
 _IRULE_OFF_REQUIRED_A = 52  # constant 0x44 Music.app requires
 _IRULE_OFF_REQUIRED_B = 76  # constant 0x01 Music.app requires
-_IRULE_OFF_REQUIRED_C = 100 # constant 0x01 Music.app requires
-_IRULE_OFF_VAL_A      = 57  # primary value (big-endian uint32)
-_IRULE_OFF_VAL_B      = 81  # secondary value for range rules
+_IRULE_OFF_REQUIRED_C = 100  # constant 0x01 Music.app requires
+_IRULE_OFF_VAL_A = 57  # primary value (big-endian uint32)
+_IRULE_OFF_VAL_B = 81  # secondary value for range rules
 
 
 def _make_int_rule(
-    field_id: int, sign: int, logic_rule: int,
-    val_a: int, val_b: int | None = None, extra_flag: int = 0,
+    field_id: int,
+    sign: int,
+    logic_rule: int,
+    val_a: int,
+    val_b: int | None = None,
+    extra_flag: int = 0,
 ) -> bytes:
     """Build a 124-byte int/enum/bool/date rule block.
 
@@ -188,8 +213,8 @@ def _make_int_rule(
     if val_b is None:
         val_b = val_a
     buf = bytearray(124)
-    buf[_IRULE_OFF_FIELD_ID]   = field_id
-    buf[_IRULE_OFF_SIGN]       = sign
+    buf[_IRULE_OFF_FIELD_ID] = field_id
+    buf[_IRULE_OFF_SIGN] = sign
     buf[_IRULE_OFF_EXTRA_FLAG] = extra_flag
     buf[_IRULE_OFF_LOGIC_RULE] = logic_rule
     # Three required constants whose exact purpose is unknown. The itunessmart
@@ -204,12 +229,12 @@ def _make_int_rule(
 
 
 # Offsets within a 192-byte subexpression header block
-_SUBHDR_OFF_FLAGS      = 4   # two prefix flag bytes (always 0x01 0x01)
-_SUBHDR_OFF_SKIP_LEN   = 51  # BE uint16: parser skips (skip_len + 56) bytes to reach next sibling
+_SUBHDR_OFF_FLAGS = 4  # two prefix flag bytes (always 0x01 0x01)
+_SUBHDR_OFF_SKIP_LEN = 51  # BE uint16: parser skips (skip_len + 56) bytes to reach next sibling
 _SUBHDR_OFF_SLST_MAGIC = 53  # "SLst" 4-byte magic
-_SUBHDR_OFF_SLST_VER   = 57  # BE uint32 version: 0x00010001
-_SUBHDR_OFF_CHILD_COUNT = 61 # BE uint32 number of child rules/groups
-_SUBHDR_OFF_LOGIC      = 68  # 0x01 = OR, 0x00 = AND
+_SUBHDR_OFF_SLST_VER = 57  # BE uint32 version: 0x00010001
+_SUBHDR_OFF_CHILD_COUNT = 61  # BE uint32 number of child rules/groups
+_SUBHDR_OFF_LOGIC = 68  # 0x01 = OR, 0x00 = AND
 
 
 def _make_subexpr_header(logic: str, n: int, children_size: int = 0) -> bytes:
@@ -236,14 +261,14 @@ def _make_subexpr_header(logic: str, n: int, children_size: int = 0) -> bytes:
     """
     buf = bytearray(_SUBEXPR_BLOCK_SIZE)
     # Prefix flags (purpose unknown, always 0x01 0x01)
-    buf[_SUBHDR_OFF_FLAGS]     = 0x01
+    buf[_SUBHDR_OFF_FLAGS] = 0x01
     buf[_SUBHDR_OFF_FLAGS + 1] = 0x01
     # Skip-length: parser reads this + 56 to skip past the entire subexpr node
     struct.pack_into(">H", buf, _SUBHDR_OFF_SKIP_LEN, _SUBEXPR_SKIP_BASE + children_size)
     # Embedded SLst structure
-    buf[_SUBHDR_OFF_SLST_MAGIC:_SUBHDR_OFF_SLST_MAGIC + 4] = b"SLst"
-    struct.pack_into(">I", buf, _SUBHDR_OFF_SLST_VER,    0x00010001)
-    struct.pack_into(">I", buf, _SUBHDR_OFF_CHILD_COUNT,  n)
+    buf[_SUBHDR_OFF_SLST_MAGIC : _SUBHDR_OFF_SLST_MAGIC + 4] = b"SLst"
+    struct.pack_into(">I", buf, _SUBHDR_OFF_SLST_VER, 0x00010001)
+    struct.pack_into(">I", buf, _SUBHDR_OFF_CHILD_COUNT, n)
     buf[_SUBHDR_OFF_LOGIC] = 0x01 if logic == "OR" else 0x00
     return bytes(buf)
 
@@ -274,12 +299,15 @@ def _encode_string_rule(field: str, op: str, value: str, last: bool) -> bytes:
     treats end-of-blob as a natural string terminator. The `last` parameter
     propagates through _encode_node so this function knows whether to omit it.
     """
-    fid  = STRING_FIELDS[field]
+    fid = STRING_FIELDS[field]
     sign = SIGN_STR_NEG if op in ("is_not", "not_contains") else SIGN_STR_POS
     logic_rule = {
-        "is": LRULE_IS, "is_not": LRULE_IS,
-        "contains": LRULE_CONT, "not_contains": LRULE_CONT,
-        "starts": LRULE_START, "ends": LRULE_END,
+        "is": LRULE_IS,
+        "is_not": LRULE_IS,
+        "contains": LRULE_CONT,
+        "not_contains": LRULE_CONT,
+        "starts": LRULE_START,
+        "ends": LRULE_END,
     }[op]
     str_data = _encode_string_data(value, null_terminate=not last)
     buf = bytearray(54)
@@ -293,7 +321,7 @@ def _encode_string_rule(field: str, op: str, value: str, last: bool) -> bytes:
 
 
 def _encode_int_rule(field: str, op: str, value: int | tuple[int, int]) -> bytes:
-    fid   = INT_FIELDS[field]
+    fid = INT_FIELDS[field]
     # Apple stores Rating as 0-100 in increments of 20 (1 star = 20, 5 stars = 100).
     # All other int fields are stored at face value.
     scale = 20 if field == "Rating" else 1
@@ -313,13 +341,12 @@ def _encode_int_rule(field: str, op: str, value: int | tuple[int, int]) -> bytes
         # appears to use a half-open interval internally. extra_flag=0x01 tells the
         # parser this is a range rule with both val_a and val_b meaningful.
         val_b = hi * scale + 9 if field == "Rating" else hi * scale
-        return _make_int_rule(fid, SIGN_INT_POS, LRULE_OTHER,
-                              lo * scale, val_b, extra_flag=0x01)
+        return _make_int_rule(fid, SIGN_INT_POS, LRULE_OTHER, lo * scale, val_b, extra_flag=0x01)
     raise ValueError(f"Unknown int op: {op!r}")
 
 
 def _encode_bool_rule(field: str, value: bool) -> bytes:
-    fid  = BOOL_FIELDS[field]
+    fid = BOOL_FIELDS[field]
     # Parser interprets: value = (sign != SIGN_INT_POS), so NEG -> True, POS -> False
     sign = SIGN_INT_NEG if value else SIGN_INT_POS
     return _make_int_rule(fid, sign, LRULE_IS, 0)
@@ -366,7 +393,9 @@ def _encode_date_rule(field: str, op: str, value: int, unit: str | None) -> byte
     buf[100] = 0x01
     if op in ("in_last", "not_in_last"):
         if unit is None:
-            raise ValueError(f"unit is required for {op!r} date rules (e.g. 'days', 'weeks', 'months')")
+            raise ValueError(
+                f"unit is required for {op!r} date rules (e.g. 'days', 'weeks', 'months')"
+            )
         buf[1] = SIGN_INT_POS if op == "in_last" else SIGN_INT_NEG
         buf[3] = 0x02  # extra_flag: relative-time mode
         buf[4] = LRULE_OTHER
@@ -387,9 +416,9 @@ def _encode_date_rule(field: str, op: str, value: int, unit: str | None) -> byte
 
 
 def _encode_enum_rule(field: str, op: str, value: str) -> bytes:
-    fid     = ENUM_FIELDS[field]
+    fid = ENUM_FIELDS[field]
     raw_val = ENUM_MAPS[field][value]
-    sign    = SIGN_INT_POS if op == "is" else SIGN_INT_NEG
+    sign = SIGN_INT_POS if op == "is" else SIGN_INT_NEG
     return _make_int_rule(fid, sign, LRULE_IS, raw_val, raw_val)
 
 
@@ -403,17 +432,16 @@ def _encode_node(node: RuleNode, last: bool = False) -> bytes:
         children = node["children"]
         n = len(children)
         encoded_children = [
-            _encode_node(child, last=(last and i == n - 1))
-            for i, child in enumerate(children)
+            _encode_node(child, last=(last and i == n - 1)) for i, child in enumerate(children)
         ]
         children_blob = b"".join(encoded_children)
         header = _make_subexpr_header(node["logic"], n, len(children_blob))
         return header + children_blob
 
     field = node["field"]
-    op    = node["op"]
+    op = node["op"]
     value = node["value"]
-    unit  = node["unit"]
+    unit = node["unit"]
 
     if field in STRING_FIELDS:
         return _encode_string_rule(field, op, value, last)
@@ -433,13 +461,13 @@ def _encode_node(node: RuleNode, last: bool = False) -> bytes:
 # Smart Info encoding
 # ---------------------------------------------------------------------------
 
-_INFO_LIVEUPDATE          = 0
-_INFO_MATCHBOOL           = 1
-_INFO_LIMITBOOL           = 2
-_INFO_LIMITMETHOD         = 3
-_INFO_SELECTIONMETHOD     = 7
-_INFO_LIMITINT            = 8   # 4 bytes big-endian
-_INFO_LIMITCHECKED        = 12
+_INFO_LIVEUPDATE = 0
+_INFO_MATCHBOOL = 1
+_INFO_LIMITBOOL = 2
+_INFO_LIMITMETHOD = 3
+_INFO_SELECTIONMETHOD = 7
+_INFO_LIMITINT = 8  # 4 bytes big-endian
+_INFO_LIMITCHECKED = 12
 _INFO_SELECTIONMETHODSIGN = 13
 
 
@@ -447,9 +475,15 @@ _INFO_SELECTIONMETHODSIGN = 13
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def encode(
-    rules: RuleNode, *, limit: int | None = None, limit_by: str = "items",
-    select_by: str = "most_played", live: bool = True, only_checked: bool = False,
+    rules: RuleNode,
+    *,
+    limit: int | None = None,
+    limit_by: str = "items",
+    select_by: str = "most_played",
+    live: bool = True,
+    only_checked: bool = False,
 ) -> tuple[bytes, bytes]:
     """
     Encode smart playlist rules to (smart_info_bytes, smart_criteria_bytes).
@@ -474,12 +508,12 @@ def encode(
     # Smart Info (112 bytes)
     info = bytearray(112)
     info[_INFO_LIVEUPDATE] = 0x01 if live else 0x00
-    info[_INFO_MATCHBOOL]  = 0x01
+    info[_INFO_MATCHBOOL] = 0x01
 
     if limit is not None:
-        info[_INFO_LIMITBOOL]           = 0x01
-        info[_INFO_LIMITMETHOD]         = LIMIT_METHODS[limit_by]
-        info[_INFO_SELECTIONMETHOD]     = SELECT_METHODS[select_by]
+        info[_INFO_LIMITBOOL] = 0x01
+        info[_INFO_LIMITMETHOD] = LIMIT_METHODS[limit_by]
+        info[_INFO_SELECTIONMETHOD] = SELECT_METHODS[select_by]
         info[_INFO_SELECTIONMETHODSIGN] = SELECT_SIGN.get(select_by, 0)
         struct.pack_into(">I", info, _INFO_LIMITINT, limit)
 
@@ -492,15 +526,13 @@ def encode(
     # passed a bare rule instead of a group, promote it to a one-child AND.
     if rules["type"] == "group":
         inner_logic = rules["logic"]
-        children    = rules["children"]
+        children = rules["children"]
     else:
         inner_logic = "AND"
-        children    = [rules]
+        children = [rules]
 
     n = len(children)
-    inner_body = b"".join(
-        _encode_node(c, last=(i == n - 1)) for i, c in enumerate(children)
-    )
+    inner_body = b"".join(_encode_node(c, last=(i == n - 1)) for i, c in enumerate(children))
     inner_subexpr = _make_subexpr_header(inner_logic, n, len(inner_body))
     criteria = _BOILERPLATE + inner_subexpr + inner_body
 
