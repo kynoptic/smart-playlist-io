@@ -16,6 +16,7 @@ decode-smart-playlists = "smart_playlist_io.decode:main"
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "pytest-cov>=5.0",
     "mypy>=1.0",
 ]
 
