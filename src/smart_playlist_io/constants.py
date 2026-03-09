@@ -142,6 +142,12 @@ TIME_UNIT_NAMES = {v: k for k, v in TIME_UNITS.items()}
 LIMIT_METHODS = {"items": 0x03, "minutes": 0x01, "hours": 0x04, "MB": 0x02, "GB": 0x05}
 LIMIT_METHOD_NAMES = {v: k for k, v in LIMIT_METHODS.items()}
 
+# SELECT_METHODS encodes directional names to byte values.
+# most_played / least_played share byte 0x19 — direction is disambiguated
+# by the SELECT_SIGN byte (0 = most/highest, 1 = least/lowest/oldest).
+# Same pattern for most_recently_played/least_recently_played (0x1A)
+# and most_recently_added/least_recently_added (0x15).
+# Decoder recovers direction from the sign byte in decode_info_flags().
 SELECT_METHODS = {
     "random": 0x02,
     "name": 0x05,
