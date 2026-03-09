@@ -17,7 +17,7 @@ pip install git+https://github.com/kynoptic/smart-playlist-io.git
 ### Encode
 
 ```python
-from smart_playlist_io import AND, OR, rule, encode, encode_b64
+from smart_playlist_io import AND, OR, rule, encode, encode_b64, RuleNode
 
 rules = AND([
     rule("Rating", "greater", 3),
@@ -62,6 +62,7 @@ decode-smart-playlists /path/to/Library.xml --out baseline.md
 | `rule` | `rule(field, op, value, unit=None)` | Rule dict |
 | `encode` | `encode(rules, *, limit, limit_by, select_by, live, only_checked)` | `(info_bytes, criteria_bytes)` |
 | `encode_b64` | `encode_b64(rules, **kwargs)` | `(info_b64_str, criteria_b64_str)` |
+| `RuleNode` | `dict[str, Any]` | Type alias for any node returned by `AND`, `OR`, or `rule` |
 
 ### `encode()` parameters
 
