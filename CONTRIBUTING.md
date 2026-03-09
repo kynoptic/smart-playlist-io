@@ -8,10 +8,13 @@ Thanks for contributing! This guide covers setup, testing, and the PR process.
 > Requires Python 3.12+.
 
 ```bash
-make init    # Create .venv and install dev dependencies
-make test    # Run the full test suite
+make init    # Create .venv, install dev dependencies, and install pre-commit hooks
+make test    # Run the full test suite (pytest + mypy baseline check)
+make typecheck  # Run mypy type checks only (src + tests)
 make clean   # Remove .venv and caches
 ```
+
+`make init` installs pre-commit hooks that enforce commit message conventions locally. If you skip `make init` and commit directly, the CI check will catch violations on push.
 
 ## Testing
 

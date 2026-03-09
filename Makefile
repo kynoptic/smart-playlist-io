@@ -1,4 +1,4 @@
-.PHONY: help init test lint fmt clean
+.PHONY: help init test lint fmt typecheck clean
 
 PYTHON  := $(shell command -v python3 2>/dev/null)
 ifndef PYTHON
@@ -15,9 +15,20 @@ init: ## Create/update .venv and install all dependencies
 	$(PYTHON) -m venv $(VENV)
 	$(VENVPY) -m pip install --upgrade pip
 	$(VENVPY) -m pip install -e ".[dev]"
+	$(VENVPY) -m pre_commit install
 
 test: ## Run the full test suite
 	$(VENVPY) -m pytest
+	@error_count=$$($(VENVPY) -m mypy src tests 2>&1 | grep -c "error:" || true); \
+	baseline=$$(head -1 .type_baseline); \
+	echo "mypy errors: $$error_count (baseline: $$baseline)"; \
+	if [ "$$error_count" -gt "$$baseline" ]; then \
+		echo "Type errors increased from $$baseline to $$error_count"; \
+		$(VENVPY) -m mypy src tests; \
+		exit 1; \
+	fi
+
+typecheck: ## Run mypy type checks against src and tests
 	@error_count=$$($(VENVPY) -m mypy src tests 2>&1 | grep -c "error:" || true); \
 	baseline=$$(head -1 .type_baseline); \
 	echo "mypy errors: $$error_count (baseline: $$baseline)"; \
