@@ -2,7 +2,7 @@
 
 Encode and decode Apple Music Smart Playlist binary format (`Smart Info` + `Smart Criteria`).
 
-Produces binary blobs suitable for XML import into Music.app via `File > Library > Import Playlist` or AppleScript `add` command. Also decodes existing smart playlists from Library XML exports into human-readable rule trees.
+Encodes rule trees to binary blobs for XML import into Music.app via `File > Library > Import Playlist` or the AppleScript `add` command. Decodes existing smart playlists from Library XML exports to readable rule trees.
 
 > This project is not affiliated with or endorsed by Apple Inc. Apple, Apple Music, and Music are trademarks of Apple Inc.
 
