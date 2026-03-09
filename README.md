@@ -1,5 +1,7 @@
 # smart-playlist-io
 
+[![PyPI](https://img.shields.io/pypi/v/smart-playlist-io)](https://pypi.org/project/smart-playlist-io/)
+
 Build and inspect Apple Music smart playlists from Python.
 
 ```python
