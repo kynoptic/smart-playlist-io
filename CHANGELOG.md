@@ -7,9 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Add developer tooling and repository hygiene for professional open-source standards.
+
+### Added
+
+- `py.typed` marker for PEP 561 compliance
+- Ruff linter and formatter (`make lint`, `make fmt`, CI lint job)
+- `.pre-commit-config.yaml` with Ruff and basic file hooks
+- `SECURITY.md` with vulnerability reporting instructions
+- `CODE_OF_CONDUCT.md` referencing Contributor Covenant v2.1
+- Explicit `[tool.mypy]` and `[tool.ruff]` configuration in `pyproject.toml`
+- 95% coverage threshold enforced via `--cov-fail-under`
+
 ## [1.0.1] - 2026-03-08
 
-Update package metadata.
+Improve package metadata for PyPI discoverability.
+
+### Changed
+
+- Added PyPI homepage URL, source URL, and bug tracker URL to package metadata
+- Added keywords and classifiers for PyPI discoverability
+- Pinned supported Python versions (3.12, 3.13) in classifiers
 
 ## [1.0.0] - 2026-03-08
 

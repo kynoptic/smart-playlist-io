@@ -1,4 +1,4 @@
-.PHONY: help init test clean
+.PHONY: help init test lint fmt clean
 
 PYTHON  := $(shell command -v python3 2>/dev/null)
 ifndef PYTHON
@@ -26,6 +26,13 @@ test: ## Run the full test suite
 		$(VENVPY) -m mypy src tests; \
 		exit 1; \
 	fi
+
+lint: ## Check code style and lint with ruff
+	$(VENVPY) -m ruff check src tests
+
+fmt: ## Auto-format and fix lint issues with ruff
+	$(VENVPY) -m ruff format src tests
+	$(VENVPY) -m ruff check --fix src tests
 
 clean: ## Remove .venv/, __pycache__/, and .pytest_cache/
 	rm -rf $(VENV)
