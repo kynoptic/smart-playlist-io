@@ -81,7 +81,7 @@ decode-smart-playlists /path/to/Library.xml --out baseline.md
 
 ## Notes
 
-Binary format details and the skip-length padding decision are in [`docs/adr-001-skip-length-padding.md`](docs/adr-001-skip-length-padding.md).
+Binary format details and the skip-length padding decision are in [`docs/format-constants.md`](docs/format-constants.md).
 
 Format knowledge derived from [itunessmart](https://github.com/cvzi/itunes_smartplaylist) by cvzi and banshee-itunes-import-plugin by Scott Peterson. See `THIRD_PARTY_NOTICES` for license text.
 
