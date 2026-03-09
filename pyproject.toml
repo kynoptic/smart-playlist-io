@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smart-playlist-io"
-version = "1.0.2"
+version = "1.1.0"
 description = "Encode and decode Apple Music Smart Playlist binary format (Smart Info + Smart Criteria)"
 readme = "README.md"
 requires-python = ">=3.12"

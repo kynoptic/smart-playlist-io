@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-09
+
+Sharpen type signatures and fix decoder output for selection methods.
+
+### Added
+
+- `RuleNode` is now a typed union of `_GroupNode | _RuleNode` TypedDicts, giving IDEs and type checkers precise hints when building rule trees
+
+### Changed
+
+- Decoded selection method names now use spaces instead of underscores (`"recently added"`, `"recently played"`, `"highest rated"`)
+- `decode_info_flags()` now raises `ValueError` with a descriptive message when passed fewer than 14 bytes, instead of crashing with `IndexError`
+
 ## [1.0.2] - 2026-03-08
 
 Add developer tooling and repository hygiene.
