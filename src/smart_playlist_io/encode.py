@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import base64
 import struct
-from typing import Any
+from typing import Any, Literal, TypedDict, cast
 
 from .constants import (
     _INFO_LIMITBOOL,
@@ -55,8 +55,27 @@ from .constants import (
     TIME_UNITS,
 )
 
-# Type alias for the rule/group tree built by AND(), OR(), and rule().
-RuleNode = dict[str, Any]
+
+class _GroupNode(TypedDict):
+    """A group node produced by AND() or OR()."""
+
+    type: Literal["group"]
+    logic: Literal["AND", "OR"]
+    children: list[RuleNode]
+
+
+class _RuleNode(TypedDict):
+    """A leaf rule node produced by rule()."""
+
+    type: Literal["rule"]
+    field: str
+    op: str
+    value: int | str | bool | tuple[int, int]
+    unit: str | None
+
+
+# Public type alias for the rule/group tree built by AND(), OR(), and rule().
+RuleNode = _GroupNode | _RuleNode
 
 
 # ---------------------------------------------------------------------------
@@ -121,12 +140,12 @@ _SUBEXPR_SKIP_BASE = 139
 # ---------------------------------------------------------------------------
 
 
-def AND(children: list[RuleNode]) -> RuleNode:
+def AND(children: list[RuleNode]) -> _GroupNode:
     """Create an AND group."""
     return {"type": "group", "logic": "AND", "children": children}
 
 
-def OR(children: list[RuleNode]) -> RuleNode:
+def OR(children: list[RuleNode]) -> _GroupNode:
     """Create an OR group."""
     return {"type": "group", "logic": "OR", "children": children}
 
@@ -136,7 +155,7 @@ def rule(
     op: str,
     value: str | int | bool | tuple[int, int],
     unit: str | None = None,
-) -> RuleNode:
+) -> _RuleNode:
     """Create a single rule.
 
     Args:
@@ -458,15 +477,15 @@ def _encode_node(node: RuleNode, last: bool = False) -> bytes:
     unit = node["unit"]
 
     if field in STRING_FIELDS:
-        return _encode_string_rule(field, op, value, last)
+        return _encode_string_rule(field, op, cast(str, value), last)
     if field in INT_FIELDS:
-        return _encode_int_rule(field, op, value)
+        return _encode_int_rule(field, op, cast("int | tuple[int, int]", value))
     if field in BOOL_FIELDS:
-        return _encode_bool_rule(field, value)
+        return _encode_bool_rule(field, cast(bool, value))
     if field in DATE_FIELDS:
-        return _encode_date_rule(field, op, value, unit)
+        return _encode_date_rule(field, op, cast(int, value), unit)
     if field in ENUM_FIELDS:
-        return _encode_enum_rule(field, op, value)
+        return _encode_enum_rule(field, op, cast(str, value))
 
     raise ValueError(f"Unknown field: {field!r}")
 
