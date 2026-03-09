@@ -57,6 +57,8 @@ from .constants import (
 
 def _decode_int_rule(data: bytes, offset: int) -> tuple[str, int]:
     """Decode a 124-byte int/enum/bool/date rule."""
+    if offset + 124 > len(data):
+        return f"<truncated at {offset}>", len(data)
     field_id = data[offset]
     sign = data[offset + 1]
     extra_flag = data[offset + 3]

@@ -293,6 +293,17 @@ class TestDecodeEdgeCases:
         assert result[0] == "AND"
         assert any("<truncated" in str(r) for r in result[1:])
 
+    def test_should_handle_truncated_int_rule_body(self):
+        # Subexpr header claims 1 child, but the rule blob is only 80 bytes
+        # (not the required 124). _decode_int_rule must return a sentinel
+        # instead of raising struct.error at offset +81.
+        int_rule = _make_int_rule(0x19, SIGN_INT_POS, LRULE_GT, 60)[:80]  # truncate
+        inner_header = _make_subexpr_header("AND", 1, len(int_rule))
+        data = _BOILERPLATE + inner_header + int_rule
+        result = decode_criteria(data)
+        assert result[0] == "AND"
+        assert any("<truncated" in str(r) for r in result[1:])
+
     def test_should_decode_negated_absolute_date(self):
         # Manually construct a negated absolute-date rule (e.g. "not after <ts>").
         # The encoder does not produce this op, but real library exports may contain it.
