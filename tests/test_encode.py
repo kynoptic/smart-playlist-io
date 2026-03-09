@@ -705,3 +705,24 @@ class TestErrorHandling:
     def test_should_reject_unknown_date_op(self):
         with pytest.raises(ValueError, match="Unknown date op"):
             encode(AND([rule("LastPlayed", "during", 3, "months")]))
+
+    def test_should_reject_string_value_longer_than_127_chars(self):
+        long_value = "A" * 128
+        with pytest.raises(ValueError, match="too long"):
+            encode(AND([rule("Genre", "is", long_value)]))
+
+    def test_should_reject_date_in_last_without_unit(self):
+        with pytest.raises(ValueError, match="unit"):
+            encode(AND([rule("LastPlayed", "in_last", 3)]))
+
+    def test_should_reject_date_not_in_last_without_unit(self):
+        with pytest.raises(ValueError, match="unit"):
+            encode(AND([rule("LastPlayed", "not_in_last", 6)]))
+
+    def test_should_reject_invalid_limit_by(self):
+        with pytest.raises(ValueError, match="limit_by"):
+            encode(AND([rule("Rating", "greater", 3)]), limit=25, limit_by="tracks")
+
+    def test_should_reject_invalid_select_by(self):
+        with pytest.raises(ValueError, match="select_by"):
+            encode(AND([rule("Rating", "greater", 3)]), limit=25, select_by="random_pick")
