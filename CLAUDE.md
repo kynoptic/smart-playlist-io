@@ -25,7 +25,7 @@ tests/
 
 ## Key constants
 
-- `_SUBEXPR_SKIP_BASE = 139` — NOT 136. See `docs/adr-001-skip-length-padding.md`.
+- `_SUBEXPR_SKIP_BASE = 139` — NOT 136. See `docs/format-constants.md`.
 - `_BOILERPLATE` — 579 fixed bytes (outer SLst + MediaKind filter)
 - Int/enum/bool/date rules: 124 bytes. String rules: 54-byte header + UTF-16 LE data.
 
