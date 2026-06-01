@@ -1,0 +1,11 @@
+{
+  // Recommended configuration for markdownlint-styleguide
+  // Inherits all rules from the recommended preset
+  "customRules": [
+    "markdownlint-styleguide"
+  ],
+  "config": {
+    "extends": "markdownlint-styleguide/recommended-config.jsonc"
+    // Add repo-specific overrides below this line
+  }
+}
