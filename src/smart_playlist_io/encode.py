@@ -98,6 +98,12 @@ RuleNode = _GroupNode | _RuleNode
 #
 #   [331-578] Two MediaKind int rules: MediaKind=Music and MediaKind=Music Video.
 #             Each is a 124-byte int rule block (field_id=0x3c).
+#
+# Note: the MediaKind subexpr's 0x01 0x01 prefix flags sit at bytes 143-144
+# (offset 4-5 within the subexpr block at 139). The 2021 export had them at
+# 140-141; current macOS (Tahoe / Music 1.6.5) rejects that layout silently
+# (playlist imports as smart but matches 0 tracks), so the flags were moved to
+# match _make_subexpr_header and every current standard-format export.
 # ---------------------------------------------------------------------------
 
 _BOILERPLATE = bytes.fromhex(
