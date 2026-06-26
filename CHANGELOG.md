@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-06-26
+
+Fix Smart Criteria so imported playlists match tracks on current macOS.
+
+### Fixed
+
+- `_BOILERPLATE` placed the MediaKind subexpression's `0x01 0x01` prefix flags at byte offset 140-141 (derived from a 2021 library export); current macOS (Tahoe / Music 1.6.5) requires them at 143-144. Imported smart playlists registered as smart but matched zero tracks. Relocating the flags fixes matching — verified against 36 of 38 standard-format real exports and by live import (a `Genre contains "Ambient"` playlist matches 444 tracks, identical to the real export's criteria)
+
 ## [1.1.1] - 2026-03-09
 
 Improve decoder robustness for malformed input.
