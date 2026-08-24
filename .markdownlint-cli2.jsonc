@@ -1,4 +1,18 @@
 {
+  "ignores": [
+    ".claude/**",
+    // Dependencies are not authored prose. gitignore:true reads only the repo's
+    // own .gitignore, so a repo relying on the global one still needs this.
+    "node_modules",
+    // Distributed templates and symlinks carrying <angle-bracket> placeholders,
+    // which parse as inline HTML. That is a property of the template, not a defect.
+    ".gitea/**",
+    ".github/**",
+    "CLAUDE.md",
+    "**/*-template.md"
+  ],
+  "gitignore": true,
+  "globs": ["**/*.md"],
   // Recommended configuration for markdownlint-styleguide
   // Inherits all rules from the recommended preset
   "customRules": [
