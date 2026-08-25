@@ -3,4 +3,4 @@
 # Python is managed by this repo's own .venv; mise pins node only, so one
 # manager owns each runtime.
 [tools]
-node = "25"
+node = "24"
